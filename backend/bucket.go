@@ -6,40 +6,50 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func NewMinio(name string, info map[string]string) error {
-	endpoint := info["endpoint"]
-	accessKeyID := info["access_key_id"]
-	secretAccessKey := info["secret_access_key"]
+type minioBackend struct {
+	endpoint        string
+	accessKeyID     string
+	secretAccessKey string
+	useSSL          bool
+	name            string
+	bucket          string
+	location        string
+	client          *minio.Client
+}
 
-	useSSL := true
+func newMinio(name string, info map[string]string) error {
+	b := &minioBackend{
+		endpoint:        info["endpoint"],
+		accessKeyID:     info["access_key_id"],
+		secretAccessKey: info["secret_access_key"],
+		useSSL:          true,
+		name:            name,
+		bucket:          info["bucket"],
+		location:        info["location"],
+	}
 
-	if endpoint == "" {
+	if b.endpoint == "" {
 		return fmt.Errorf("missing minio param endpoint for %s", name)
 	}
 
-	if accessKeyID == "" {
+	if b.accessKeyID == "" {
 		return fmt.Errorf("missing minio param access_key_id for %s", name)
 	}
 
-	if secretAccessKey == "" {
+	if b.secretAccessKey == "" {
 		return fmt.Errorf("missing minio param secret_access_key for %s", name)
-	}
-
-	b := &minioBackend{
-		name:     name,
-		bucket:   info["bucket"],
-		location: info["location"],
 	}
 
 	if b.bucket == "" {
 		return fmt.Errorf("missing minio bucket param for %s", name)
 	}
+
 	if b.location == "" {
 		b.location = "cn-north-1"
 	}
 	// Initialize minio client object.
 	var err error
-	b.client, err = minio.New(endpoint, accessKeyID, secretAccessKey, useSSL)
+	b.client, err = minio.New(b.endpoint, b.accessKeyID, b.secretAccessKey, b.useSSL)
 	if err != nil {
 		return err
 	}
@@ -47,13 +57,6 @@ func NewMinio(name string, info map[string]string) error {
 		return err
 	}
 	return nil
-}
-
-type minioBackend struct {
-	location string
-	name     string
-	bucket   string
-	client   *minio.Client
 }
 
 func (b *minioBackend) checkBucket() error {
