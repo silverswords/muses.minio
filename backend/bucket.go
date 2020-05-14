@@ -2,6 +2,8 @@ package backend
 
 import (
 	"fmt"
+	"net/url"
+	"time"
 
 	"github.com/minio/minio-go/v6"
 )
@@ -12,9 +14,11 @@ type minioBackend struct {
 	secretAccessKey string
 	useSSL          bool
 	name            string
-	bucket          string
+	bucketName      string
 	location        string
 	client          *minio.Client
+	objectName      string
+	expiry          time.Duration
 }
 
 func newMinio(name string, info map[string]string) error {
@@ -24,8 +28,10 @@ func newMinio(name string, info map[string]string) error {
 		secretAccessKey: info["secret_access_key"],
 		useSSL:          true,
 		name:            name,
-		bucket:          info["bucket"],
+		bucketName:      info["bucket_name"],
 		location:        info["location"],
+		objectName:      info["object_name"],
+		expiry:          time.Second * 24 * 60 * 60, // Generates a url which expires in a day.
 	}
 
 	if b.endpoint == "" {
@@ -40,12 +46,16 @@ func newMinio(name string, info map[string]string) error {
 		return fmt.Errorf("missing minio param secret_access_key for %s", name)
 	}
 
-	if b.bucket == "" {
-		return fmt.Errorf("missing minio bucket param for %s", name)
+	if b.bucketName == "" {
+		return fmt.Errorf("missing minio bucket_name param for %s", name)
 	}
 
 	if b.location == "" {
 		b.location = "cn-north-1"
+	}
+
+	if b.bucketName == "" {
+		return fmt.Errorf("missing minio object_name param for %s", name)
 	}
 	// Initialize minio client object.
 	var err error
@@ -60,13 +70,26 @@ func newMinio(name string, info map[string]string) error {
 }
 
 func (b *minioBackend) checkBucket() error {
-	err := b.client.MakeBucket(b.bucket, b.location)
+	err := b.client.MakeBucket(b.bucketName, b.location)
 	if err != nil {
-		exists, err := b.client.BucketExists(b.bucket)
+		exists, err := b.client.BucketExists(b.bucketName)
 		if err == nil && exists {
 			return nil
 		}
 		return err
 	}
+	if url, err := b.createObject(); err != nil {
+		fmt.Println(url)
+		return err
+	}
 	return nil
+}
+
+func (b *minioBackend) createObject() (*url.URL, error) {
+	presignedURL, err := b.client.PresignedPutObject(b.bucketName, b.objectName, b.expiry)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return presignedURL, nil
 }
