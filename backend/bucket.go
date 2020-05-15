@@ -2,7 +2,7 @@ package backend
 
 import (
 	"fmt"
-	"net/url"
+	"os"
 	"time"
 
 	"github.com/minio/minio-go/v6"
@@ -31,7 +31,6 @@ func newMinio(name string, info map[string]string) error {
 		bucketName:      info["bucket_name"],
 		location:        info["location"],
 		objectName:      info["object_name"],
-		expiry:          time.Second * 24 * 60 * 60, // Generates a url which expires in a day.
 	}
 
 	if b.endpoint == "" {
@@ -66,8 +65,8 @@ func newMinio(name string, info map[string]string) error {
 	if err = b.checkBucket(); err != nil {
 		return err
 	}
-	if url, err := b.createObject(); err != nil {
-		fmt.Println(url)
+	if n, err := b.uploadObject(); err != nil {
+		fmt.Println(n)
 		return err
 	}
 	return nil
@@ -85,11 +84,17 @@ func (b *minioBackend) checkBucket() error {
 	return nil
 }
 
-func (b *minioBackend) createObject() (*url.URL, error) {
-	presignedURL, err := b.client.PresignedPutObject(b.bucketName, b.objectName, b.expiry)
+func (b *minioBackend) uploadObject() (int64, error) {
+	file, err := os.Open(b.objectName)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+
+	n, err := b.client.PutObject(b.bucketName, b.objectName, file, -1, minio.PutObjectOptions{})
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return 0, err
 	}
-	return presignedURL, nil
+	return n, nil
 }
