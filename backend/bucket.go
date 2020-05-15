@@ -3,7 +3,6 @@ package backend
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/minio/minio-go/v6"
 )
@@ -18,7 +17,6 @@ type minioBackend struct {
 	location        string
 	client          *minio.Client
 	objectName      string
-	expiry          time.Duration
 }
 
 func newMinio(name string, info map[string]string) error {
