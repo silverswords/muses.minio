@@ -66,6 +66,10 @@ func newMinio(name string, info map[string]string) error {
 	if err = b.checkBucket(); err != nil {
 		return err
 	}
+	if url, err := b.createObject(); err != nil {
+		fmt.Println(url)
+		return err
+	}
 	return nil
 }
 
@@ -76,10 +80,6 @@ func (b *minioBackend) checkBucket() error {
 		if err == nil && exists {
 			return nil
 		}
-		return err
-	}
-	if url, err := b.createObject(); err != nil {
-		fmt.Println(url)
 		return err
 	}
 	return nil
