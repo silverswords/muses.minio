@@ -2,7 +2,7 @@ package backend
 
 import (
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/minio/minio-go/v6"
 )
@@ -17,6 +17,7 @@ type minioBackend struct {
 	location        string
 	client          *minio.Client
 	objectName      string
+	reader          io.Reader
 }
 
 func newMinio(name string, info map[string]string) error {
@@ -83,16 +84,14 @@ func (b *minioBackend) checkBucket() error {
 }
 
 func (b *minioBackend) uploadObject() (int64, error) {
-	file, err := os.Open(b.objectName)
-	if err != nil {
-		return 0, err
-	}
-	defer file.Close()
-
-	n, err := b.client.PutObject(b.bucketName, b.objectName, file, -1, minio.PutObjectOptions{})
+	n, err := b.client.PutObject(b.bucketName, b.objectName, b.reader, -1, minio.PutObjectOptions{})
 	if err != nil {
 		fmt.Println(err)
 		return 0, err
 	}
 	return n, nil
+}
+
+func (b *minioBackend) Delete() error {
+	return b.client.RemoveObject(b.bucketName, b.objectName)
 }
