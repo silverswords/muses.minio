@@ -39,6 +39,22 @@ func (b *minioBackend) checkBucket() error {
 	return nil
 }
 
+func (b *minioBackend) listBuckets() ([]minio.BucketInfo, error) {
+	buckets, err := b.client.ListBuckets()
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	for _, bucket := range buckets {
+		fmt.Println(bucket)
+	}
+	return buckets, nil
+}
+
+func (b *minioBackend) removeBucket() error {
+	return b.client.RemoveBucket("mybucket")
+}
+
 func (b *minioBackend) upload(objectName string, reader io.Reader) (int64, error) {
 	n, err := b.client.PutObject(b.bucketName, objectName, reader, -1, minio.PutObjectOptions{})
 	if err != nil {
