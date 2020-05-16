@@ -52,7 +52,7 @@ func (b *minioBackend) listBuckets() ([]minio.BucketInfo, error) {
 }
 
 func (b *minioBackend) removeBucket() error {
-	return b.client.RemoveBucket("mybucket")
+	return b.client.RemoveBucket(b.bucketName)
 }
 
 func (b *minioBackend) upload(objectName string, reader io.Reader) (int64, error) {
