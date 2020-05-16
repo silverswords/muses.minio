@@ -12,12 +12,7 @@ type minioBackend struct {
 	accessKeyID     string
 	secretAccessKey string
 	useSSL          bool
-	name            string
-	bucketName      string
-	location        string
 	client          *minio.Client
-	objectName      string
-	reader          io.Reader
 }
 
 func (b *minioBackend) newMinio() error {
@@ -30,10 +25,10 @@ func (b *minioBackend) newMinio() error {
 	return nil
 }
 
-func (b *minioBackend) checkBucket() error {
-	err := b.client.MakeBucket(b.bucketName, b.location)
+func (b *minioBackend) checkBucket(bucketName string, location string) error {
+	err := b.client.MakeBucket(bucketName, location)
 	if err != nil {
-		exists, err := b.client.BucketExists(b.bucketName)
+		exists, err := b.client.BucketExists(bucketName)
 		if err == nil && exists {
 			return nil
 		}
@@ -42,8 +37,8 @@ func (b *minioBackend) checkBucket() error {
 	return nil
 }
 
-func (b *minioBackend) upload() (int64, error) {
-	n, err := b.client.PutObject(b.bucketName, b.objectName, b.reader, -1, minio.PutObjectOptions{})
+func (b *minioBackend) upload(bucketName string, objectName string, reader io.Reader) (int64, error) {
+	n, err := b.client.PutObject(bucketName, objectName, reader, -1, minio.PutObjectOptions{})
 	if err != nil {
 		fmt.Println(err)
 		return 0, err
@@ -51,8 +46,8 @@ func (b *minioBackend) upload() (int64, error) {
 	return n, nil
 }
 
-func (b *minioBackend) read() (*minio.Object, error) {
-	minioObject, err := b.client.GetObject(b.bucketName, b.objectName, minio.GetObjectOptions{})
+func (b *minioBackend) read(bucketName string, objectName string) (*minio.Object, error) {
+	minioObject, err := b.client.GetObject(bucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -60,6 +55,6 @@ func (b *minioBackend) read() (*minio.Object, error) {
 	return minioObject, nil
 }
 
-func (b *minioBackend) delete() error {
-	return b.client.RemoveObject(b.bucketName, b.objectName)
+func (b *minioBackend) delete(bucketName string, objectName string) error {
+	return b.client.RemoveObject(bucketName, objectName)
 }
