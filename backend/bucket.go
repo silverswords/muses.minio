@@ -15,6 +15,9 @@ type minioBackend struct {
 	bucketName      string
 	location        string
 	client          *minio.Client
+	mode            *minio.RetentionMode
+	validity        *uint
+	unit            *minio.ValidityUnit
 }
 
 func (b *minioBackend) newMinio() error {
@@ -39,6 +42,10 @@ func (b *minioBackend) checkBucket() error {
 	return nil
 }
 
+func (b *minioBackend) removeBucket() error {
+	return b.client.RemoveBucket(b.bucketName)
+}
+
 func (b *minioBackend) bucketPolicy() error {
 	policy := `{"Version": "2012-10-17","Statement": [{"Action": ["s3:GetObject"],"Effect": "Allow","Principal": {"AWS": ["*"]},"Resource": ["arn:aws:s3:::my-bucketname/*"],"Sid": ""}]}`
 
@@ -50,24 +57,21 @@ func (b *minioBackend) bucketPolicy() error {
 	return err
 }
 
-func (b *minioBackend) listBuckets() ([]minio.BucketInfo, error) {
-	buckets, err := b.client.ListBuckets()
+func (b *minioBackend) objectLock() error {
+	// mode := Governance
+	// validity := uint(30)
+	// unit := Days
+
+	err := b.client.SetObjectLockConfig(b.bucketName, b.mode, b.validity, b.unit)
 	if err != nil {
 		fmt.Println(err)
-		return nil, err
+		return err
 	}
-	for _, bucket := range buckets {
-		fmt.Println(bucket)
-	}
-	return buckets, nil
+	return err
 }
 
-func (b *minioBackend) removeBucket() error {
-	return b.client.RemoveBucket(b.bucketName)
-}
-
-func (b *minioBackend) upload(objectName string, reader io.Reader) (int64, error) {
-	n, err := b.client.PutObject(b.bucketName, objectName, reader, -1, minio.PutObjectOptions{})
+func (b *minioBackend) uploadFile(filePath string, reader io.Reader) (int64, error) {
+	n, err := b.client.PutObject(b.bucketName, filePath, reader, -1, minio.PutObjectOptions{})
 	if err != nil {
 		fmt.Println(err)
 		return 0, err
@@ -75,8 +79,8 @@ func (b *minioBackend) upload(objectName string, reader io.Reader) (int64, error
 	return n, nil
 }
 
-func (b *minioBackend) read(objectName string) (*minio.Object, error) {
-	minioObject, err := b.client.GetObject(b.bucketName, objectName, minio.GetObjectOptions{})
+func (b *minioBackend) readFile(filePath string) (*minio.Object, error) {
+	minioObject, err := b.client.GetObject(b.bucketName, filePath, minio.GetObjectOptions{})
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -84,6 +88,6 @@ func (b *minioBackend) read(objectName string) (*minio.Object, error) {
 	return minioObject, nil
 }
 
-func (b *minioBackend) delete(objectName string) error {
-	return b.client.RemoveObject(b.bucketName, objectName)
+func (b *minioBackend) deleteFile(filePath string) error {
+	return b.client.RemoveObject(b.bucketName, filePath)
 }
