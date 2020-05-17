@@ -39,6 +39,17 @@ func (b *minioBackend) checkBucket() error {
 	return nil
 }
 
+func (b *minioBackend) bucketPolicy() error {
+	policy := `{"Version": "2012-10-17","Statement": [{"Action": ["s3:GetObject"],"Effect": "Allow","Principal": {"AWS": ["*"]},"Resource": ["arn:aws:s3:::my-bucketname/*"],"Sid": ""}]}`
+
+	err := b.client.SetBucketPolicy(b.bucketName, policy)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return err
+}
+
 func (b *minioBackend) listBuckets() ([]minio.BucketInfo, error) {
 	buckets, err := b.client.ListBuckets()
 	if err != nil {
