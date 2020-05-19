@@ -3,6 +3,7 @@ package backend
 import (
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/minio/minio-go/v6"
 )
@@ -35,11 +36,10 @@ func (b *minioBackend) checkBucket() error {
 	if err != nil {
 		exists, err := b.client.BucketExists(b.bucketName)
 		if err == nil && exists {
-			return nil
+			log.Printf("We already own %s\n", b.bucketName)
 		}
-		return err
 	}
-	return nil
+	return err
 }
 
 func (b *minioBackend) removeBucket() error {
@@ -52,7 +52,6 @@ func (b *minioBackend) bucketPolicy() error {
 	err := b.client.SetBucketPolicy(b.bucketName, policy)
 	if err != nil {
 		fmt.Println(err)
-		return err
 	}
 	return err
 }
@@ -65,7 +64,22 @@ func (b *minioBackend) objectLock() error {
 	err := b.client.SetObjectLockConfig(b.bucketName, b.mode, b.validity, b.unit)
 	if err != nil {
 		fmt.Println(err)
-		return err
+	}
+	return err
+}
+
+func (b *minioBackend) bucketEncryption() error {
+	config := minio.ServerSideEncryptionConfiguration{Rules: []minio.Rule{
+		{
+			Apply: minio.ApplyServerSideEncryptionByDefault{
+				SSEAlgorithm: "AES256",
+			},
+		},
+	}}
+	// Set default encryption configuration on a bucket
+	err := b.client.SetBucketEncryption(b.bucketName, config)
+	if err != nil {
+		fmt.Println(err)
 	}
 	return err
 }
