@@ -68,6 +68,24 @@ func (b *minioBackend) objectLock() error {
 	return err
 }
 
+func (b *minioBackend) bucketNotification() error {
+	queueArn := minio.NewArn("aws", "sqs", "us-east-1", "804605494417", "PhotoUpdate")
+
+	queueConfig := minio.NewNotificationConfig(queueArn)
+	queueConfig.AddEvents(minio.ObjectCreatedAll, minio.ObjectRemovedAll)
+	queueConfig.AddFilterPrefix("photos/")
+	queueConfig.AddFilterSuffix(".jpg")
+
+	bucketNotification := minio.BucketNotification{}
+	bucketNotification.AddQueue(queueConfig)
+
+	err := b.client.SetBucketNotification(b.bucketName, bucketNotification)
+	if err != nil {
+		fmt.Println("Unable to set the bucket notification: ", err)
+	}
+	return err
+}
+
 func (b *minioBackend) bucketEncryption() error {
 	config := minio.ServerSideEncryptionConfiguration{Rules: []minio.Rule{
 		{
