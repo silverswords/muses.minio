@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v6/pkg/encrypt"
 )
 
 type minioBackend struct {
@@ -19,6 +20,7 @@ type minioBackend struct {
 	mode            *minio.RetentionMode
 	validity        *uint
 	unit            *minio.ValidityUnit
+	encrypt         bool
 }
 
 func (b *minioBackend) newMinio() error {
@@ -86,24 +88,21 @@ func (b *minioBackend) bucketNotification() error {
 	return err
 }
 
-func (b *minioBackend) bucketEncryption() error {
-	config := minio.ServerSideEncryptionConfiguration{Rules: []minio.Rule{
-		{
-			Apply: minio.ApplyServerSideEncryptionByDefault{
-				SSEAlgorithm: "AES256",
-			},
-		},
-	}}
-	// Set default encryption configuration on a bucket
-	err := b.client.SetBucketEncryption(b.bucketName, config)
-	if err != nil {
-		fmt.Println(err)
+func putOptions(encrypted bool, contentType string) minio.PutObjectOptions {
+	options := minio.PutObjectOptions{}
+	if encrypted {
+		options.ServerSideEncryption = encrypt.NewSSE()
 	}
-	return err
+	options.ContentType = contentType
+
+	return options
 }
 
 func (b *minioBackend) uploadFile(filePath string, reader io.Reader) (int64, error) {
-	n, err := b.client.PutObject(b.bucketName, filePath, reader, -1, minio.PutObjectOptions{})
+	contentType := "binary/octet-stream"
+
+	options := putOptions(b.encrypt, contentType)
+	n, err := b.client.PutObject(b.bucketName, filePath, reader, -1, options)
 	if err != nil {
 		fmt.Println(err)
 		return 0, err
