@@ -18,8 +18,6 @@ type minioBackend struct {
 	location        string
 	client          *minio.Client
 	mode            *minio.RetentionMode
-	validity        *uint
-	unit            *minio.ValidityUnit
 	encrypt         bool
 }
 
@@ -58,18 +56,6 @@ func (b *minioBackend) bucketPolicy() error {
 	return err
 }
 
-func (b *minioBackend) objectLock() error {
-	// mode := Governance
-	// validity := uint(30)
-	// unit := Days
-
-	err := b.client.SetObjectLockConfig(b.bucketName, b.mode, b.validity, b.unit)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return err
-}
-
 func (b *minioBackend) bucketNotification() error {
 	queueArn := minio.NewArn("aws", "sqs", "us-east-1", "804605494417", "PhotoUpdate")
 
@@ -88,20 +74,22 @@ func (b *minioBackend) bucketNotification() error {
 	return err
 }
 
-func putOptions(encrypted bool, contentType string) minio.PutObjectOptions {
+func putOptions(encrypted bool, contentType string, mode *minio.RetentionMode) minio.PutObjectOptions {
 	options := minio.PutObjectOptions{}
 	if encrypted {
 		options.ServerSideEncryption = encrypt.NewSSE()
 	}
 	options.ContentType = contentType
+	options.Mode = mode
 
 	return options
 }
 
 func (b *minioBackend) uploadFile(filePath string, reader io.Reader) (int64, error) {
 	contentType := "binary/octet-stream"
+	mode := b.mode
 
-	options := putOptions(b.encrypt, contentType)
+	options := putOptions(b.encrypt, contentType, mode)
 	n, err := b.client.PutObject(b.bucketName, filePath, reader, -1, options)
 	if err != nil {
 		fmt.Println(err)
