@@ -46,16 +46,6 @@ func (b *minioBackend) removeBucket() error {
 	return b.client.RemoveBucket(b.bucketName)
 }
 
-func (b *minioBackend) bucketPolicy() error {
-	policy := `{"Version": "2012-10-17","Statement": [{"Action": ["s3:GetObject"],"Effect": "Allow","Principal": {"AWS": ["*"]},"Resource": ["arn:aws:s3:::my-bucketname/*"],"Sid": ""}]}`
-
-	err := b.client.SetBucketPolicy(b.bucketName, policy)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return err
-}
-
 func (b *minioBackend) bucketNotification() error {
 	queueArn := minio.NewArn("aws", "sqs", "us-east-1", "804605494417", "PhotoUpdate")
 
