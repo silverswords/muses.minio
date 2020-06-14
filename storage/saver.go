@@ -8,10 +8,6 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-type Saver interface {
-	Save()
-}
-
 func putOptions(encrypted bool, contentType string, mode *minio.RetentionMode) minio.PutObjectOptions {
 	options := minio.PutObjectOptions{}
 	if encrypted {
