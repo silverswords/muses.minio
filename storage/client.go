@@ -7,7 +7,8 @@ import (
 )
 
 type Client interface {
-	New() *minio.Client
+	newClient()
+	getClient() *minio.Client
 }
 
 type client struct {
@@ -15,16 +16,20 @@ type client struct {
 	AccessKeyID     string
 	SecretAccessKey string
 	UseSSL          bool
+	Client          *minio.Client
 }
 
-func (b *client) New() *minio.Client {
+func (b *client) newClient() {
 	// Initialize minio client object.
 	minioClient, err := minio.New(b.Endpoint, b.AccessKeyID, b.SecretAccessKey, b.UseSSL)
 	if err != nil {
 		fmt.Println(err)
-		return nil
 	}
-	return minioClient
+	b.Client = minioClient
+}
+
+func (b *client) getClient() *minio.Client {
+	return b.Client
 }
 
 func NewMinio(endpoint string, accessKeyID string, secretAccessKey string, useSSL bool) Client {
