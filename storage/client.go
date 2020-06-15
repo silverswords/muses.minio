@@ -7,8 +7,7 @@ import (
 )
 
 type Client interface {
-	NewClient()
-	GetClient() *minio.Client
+	GetMinioClient() *minio.Client
 }
 
 type client struct {
@@ -16,27 +15,29 @@ type client struct {
 	AccessKeyID     string
 	SecretAccessKey string
 	UseSSL          bool
-	Client          *minio.Client
+	NewMinioClient  *minio.Client
 }
 
-func (b *client) NewClient() {
-	// Initialize minio client object.
-	minioClient, err := minio.New(b.Endpoint, b.AccessKeyID, b.SecretAccessKey, b.UseSSL)
-	if err != nil {
-		fmt.Println(err)
-	}
-	b.Client = minioClient
+func (c *client) GetMinioClient() *minio.Client {
+	return c.NewMinioClient
 }
 
-func (b *client) GetClient() *minio.Client {
-	return b.Client
-}
-
-func NewMinio(endpoint string, accessKeyID string, secretAccessKey string, useSSL bool) Client {
+func NewClient(endpoint string, accessKeyID string, secretAccessKey string, useSSL bool, newMinioClient *minio.Client) Client {
 	return &client{
 		Endpoint:        endpoint,
 		AccessKeyID:     accessKeyID,
 		SecretAccessKey: secretAccessKey,
 		UseSSL:          useSSL,
+		NewMinioClient:  newMinioClient,
 	}
+}
+
+func NewMinioClient(endpoint string, accessKeyID string, secretAccessKey string, useSSL bool) Client {
+	newMinioClient, err := minio.New(endpoint, accessKeyID, secretAccessKey, useSSL)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	minioClient := NewClient(endpoint, accessKeyID, secretAccessKey, useSSL, newMinioClient)
+	return minioClient
 }
