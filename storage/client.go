@@ -18,26 +18,70 @@ type client struct {
 	NewMinioClient  *minio.Client
 }
 
+type clientOption func(*client)
+
+func WithEndpoint(e string) clientOption {
+	return func(c *client) {
+		c.Endpoint = e
+	}
+}
+
+func WithAccessKeyID(a string) clientOption {
+	return func(c *client) {
+		c.AccessKeyID = a
+	}
+}
+
+func WithSecretAccessKey(s string) clientOption {
+	return func(c *client) {
+		c.SecretAccessKey = s
+	}
+}
+
+func WithUseSSL(u bool) clientOption {
+	return func(c *client) {
+		c.UseSSL = u
+	}
+}
+
+func WithNewMinioClient(n *minio.Client) clientOption {
+	return func(c *client) {
+		c.NewMinioClient = n
+	}
+}
+
 func (c *client) GetMinioClient() *minio.Client {
 	return c.NewMinioClient
 }
 
-func NewClient(endpoint string, accessKeyID string, secretAccessKey string, useSSL bool, newMinioClient *minio.Client) Client {
+var defaultClientOptions = client{
+	Endpoint:        "127.0.0.1:9001",
+	AccessKeyID:     "minio",
+	SecretAccessKey: "minio123",
+	UseSSL:          false,
+}
+
+func NewClient(options client, newMinioClient *minio.Client) Client {
 	return &client{
-		Endpoint:        endpoint,
-		AccessKeyID:     accessKeyID,
-		SecretAccessKey: secretAccessKey,
-		UseSSL:          useSSL,
+		Endpoint:        options.Endpoint,
+		AccessKeyID:     options.AccessKeyID,
+		SecretAccessKey: options.SecretAccessKey,
+		UseSSL:          options.UseSSL,
 		NewMinioClient:  newMinioClient,
 	}
 }
 
-func NewMinioClient(endpoint string, accessKeyID string, secretAccessKey string, useSSL bool) Client {
-	newMinioClient, err := minio.New(endpoint, accessKeyID, secretAccessKey, useSSL)
+func NewMinioClient(opts ...clientOption) Client {
+	options := defaultClientOptions
+	for _, o := range opts {
+		o(&options)
+	}
+
+	newMinioClient, err := minio.New(options.Endpoint, options.AccessKeyID, options.SecretAccessKey, options.UseSSL)
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
-	minioClient := NewClient(endpoint, accessKeyID, secretAccessKey, useSSL, newMinioClient)
+	minioClient := NewClient(options, newMinioClient)
 	return minioClient
 }
