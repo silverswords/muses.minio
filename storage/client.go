@@ -71,7 +71,11 @@ func NewClient(options client, newMinioClient *minio.Client) Client {
 	}
 }
 
-func NewMinioClient(options client) Client {
+func NewMinioClient(opts ...clientOption) Client {
+	options := defaultClientOptions
+	for _, o := range opts {
+		o(&options)
+	}
 	newMinioClient, err := minio.New(options.Endpoint, options.AccessKeyID, options.SecretAccessKey, options.UseSSL)
 	if err != nil {
 		fmt.Println(err)
@@ -79,12 +83,4 @@ func NewMinioClient(options client) Client {
 	}
 	minioClient := NewClient(options, newMinioClient)
 	return minioClient
-}
-
-func DecoratorNewMinioClient(opts ...clientOption) Client {
-	options := defaultClientOptions
-	for _, o := range opts {
-		o(&options)
-	}
-	return NewMinioClient(options)
 }
