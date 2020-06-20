@@ -8,12 +8,6 @@ import (
 )
 
 func SaveMinioObject(bucketName string, objectName string) error {
-	new, err := NewMinioClient()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	minioClient := new.GetMinioClient()
-
 	reader, err := os.Open(bucketName)
 	if err != nil {
 		log.Fatalln(err)
@@ -34,8 +28,7 @@ func SaveMinioObject(bucketName string, objectName string) error {
 		log.Fatalln(err)
 	}
 
-	var b *bucketObjectCache
-	err = b.Set(bucketName, objectName)
+	err = objectCache.Set(bucketName, objectName)
 	if err != nil {
 		log.Fatalln(err)
 	}

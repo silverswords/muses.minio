@@ -6,6 +6,8 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
+var objectCache *bucketObjectCache
+
 type bucketObjectCache struct {
 	// mutex is used for handling the concurrent
 	// read/write requests for cache.
@@ -33,12 +35,6 @@ func (b *bucketObjectCache) Get(bucketName string, objectName string) *minio.Obj
 func (b *bucketObjectCache) Set(bucketName string, objectName string) error {
 	b.Lock()
 	defer b.Unlock()
-
-	new, err := NewMinioClient()
-	if err != nil {
-		return err
-	}
-	minioClient := new.GetMinioClient()
 
 	filePath := bucketName + "/" + objectName
 	minioObject, err := minioClient.GetObject(bucketName, objectName, minio.GetObjectOptions{})

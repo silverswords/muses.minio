@@ -22,12 +22,6 @@ func checkBucket(bucketName string, opts ...Option) error {
 		o(&options)
 	}
 
-	new, err := NewMinioClient()
-	if err != nil {
-		return err
-	}
-	minioClient := new.GetMinioClient()
-
 	exists, err := minioClient.BucketExists(bucketName)
 	if exists == false && err == nil {
 		err = minioClient.MakeBucket(bucketName, options.Location)

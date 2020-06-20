@@ -18,6 +18,9 @@ type client struct {
 
 type clientOption func(*client)
 
+var new Client
+var minioClient = new.GetMinioClient()
+
 var defaultClientOptions = client{
 	Endpoint:        "127.0.0.1:9001",
 	AccessKeyID:     "minio",
