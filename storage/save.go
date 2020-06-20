@@ -7,10 +7,10 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func Save(bucketName string, objectName string) (int64, error) {
+func SaveMinioObject(bucketName string, objectName string) error {
 	new, err := NewMinioClient()
 	if err != nil {
-		return 0, err
+		log.Fatalln(err)
 	}
 	minioClient := new.GetMinioClient()
 
@@ -26,19 +26,19 @@ func Save(bucketName string, objectName string) (int64, error) {
 
 	err = checkBucket(bucketName)
 	if err != nil {
-		return 0, err
+		log.Fatalln(err)
 	}
 
-	n, err := minioClient.PutObject(bucketName, objectName, reader, objectStat.Size(), minio.PutObjectOptions{})
+	_, err = minioClient.PutObject(bucketName, objectName, reader, objectStat.Size(), minio.PutObjectOptions{})
 	if err != nil {
-		return 0, err
+		log.Fatalln(err)
 	}
 
 	var b *bucketObjectCache
 	err = b.Set(bucketName, objectName)
 	if err != nil {
-		return 0, err
+		log.Fatalln(err)
 	}
 
-	return n, nil
+	return err
 }

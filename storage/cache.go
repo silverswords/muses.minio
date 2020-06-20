@@ -20,12 +20,12 @@ func newBucketObjectCache() *bucketObjectCache {
 	}
 }
 
-func (b *bucketObjectCache) Get(bucketName string, objectName string) (minioObject *minio.Object) {
+func (b *bucketObjectCache) Get(bucketName string, objectName string) *minio.Object {
 	b.RLock()
 	defer b.RUnlock()
 
 	filePath := bucketName + "/" + objectName
-	minioObject = b.items[filePath]
+	minioObject := b.items[filePath]
 
 	return minioObject
 }
