@@ -34,7 +34,10 @@ func (b *bucketObjectCache) Set(bucketName string, objectName string) error {
 	b.Lock()
 	defer b.Unlock()
 
-	new := NewMinioClient()
+	new, err := NewMinioClient()
+	if err != nil {
+		return err
+	}
 	minioClient := new.GetMinioClient()
 
 	filePath := bucketName + "/" + objectName

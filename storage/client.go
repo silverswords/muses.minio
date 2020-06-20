@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/minio/minio-go/v6"
 )
 
@@ -71,7 +69,7 @@ func NewClient(options client, newMinioClient *minio.Client) Client {
 	}
 }
 
-func NewMinioClient(opts ...clientOption) Client {
+func NewMinioClient(opts ...clientOption) (Client, error) {
 	options := defaultClientOptions
 	for _, o := range opts {
 		o(&options)
@@ -79,10 +77,9 @@ func NewMinioClient(opts ...clientOption) Client {
 
 	newMinioClient, err := minio.New(options.Endpoint, options.AccessKeyID, options.SecretAccessKey, options.UseSSL)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
 
 	minioClient := NewClient(options, newMinioClient)
-	return minioClient
+	return minioClient, nil
 }
