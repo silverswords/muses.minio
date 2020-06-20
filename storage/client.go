@@ -76,11 +76,13 @@ func NewMinioClient(opts ...clientOption) Client {
 	for _, o := range opts {
 		o(&options)
 	}
+
 	newMinioClient, err := minio.New(options.Endpoint, options.AccessKeyID, options.SecretAccessKey, options.UseSSL)
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
+
 	minioClient := NewClient(options, newMinioClient)
 	return minioClient
 }
