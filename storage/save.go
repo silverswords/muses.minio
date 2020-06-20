@@ -7,7 +7,7 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func SaveMinioObject(bucketName string, objectName string) error {
+func Save(bucketName string, objectName string) error {
 	reader, err := os.Open(bucketName)
 	if err != nil {
 		log.Fatalln(err)
