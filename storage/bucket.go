@@ -1,5 +1,7 @@
 package storage
 
+import "log"
+
 type bucket struct {
 	Location string
 }
@@ -16,18 +18,26 @@ func WithLocation(l string) Option {
 	}
 }
 
-func checkBucket(bucketName string, opts ...Option) error {
+func checkBucket(bucketName string) (bool, error) {
+	exists, err := minioClient.BucketExists(bucketName)
+	if err != nil {
+		log.Fatalln(err)
+		return false, err
+	}
+
+	return exists, err
+}
+
+func newBucket(bucketName string, opts ...Option) error {
 	options := defaultOptions
 	for _, o := range opts {
 		o(&options)
 	}
 
-	exists, err := minioClient.BucketExists(bucketName)
-	if exists == false && err == nil {
-		err = minioClient.MakeBucket(bucketName, options.Location)
-		if err != nil {
-			return err
-		}
+	err := minioClient.MakeBucket(bucketName, options.Location)
+	if err != nil {
+		log.Fatalln(err)
+		return err
 	}
 
 	return err
