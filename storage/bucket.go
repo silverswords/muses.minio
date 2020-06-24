@@ -18,7 +18,7 @@ func WithLocation(l string) Option {
 	}
 }
 
-func checkBucket(bucketName string) (bool, error) {
+func CheckBucket(bucketName string) (bool, error) {
 	exists, err := minioClient.BucketExists(bucketName)
 	if err != nil {
 		log.Fatalln(err)
@@ -28,7 +28,7 @@ func checkBucket(bucketName string) (bool, error) {
 	return exists, err
 }
 
-func newBucket(bucketName string, opts ...Option) error {
+func NewBucket(bucketName string, opts ...Option) error {
 	options := defaultOptions
 	for _, o := range opts {
 		o(&options)

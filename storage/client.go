@@ -5,11 +5,10 @@ import (
 )
 
 type Client interface {
-	GetMinioClient() *minio.Client
+	GetMinioClient(EndPoint string) *minio.Client
 }
 
 type client struct {
-	Endpoint        string
 	AccessKeyID     string
 	SecretAccessKey string
 	UseSSL          bool
@@ -19,19 +18,12 @@ type client struct {
 type clientOption func(*client)
 
 var new Client
-var minioClient = new.GetMinioClient()
+var minioClient = new.GetMinioClient("127.0.0.1:9001")
 
 var defaultClientOptions = client{
-	Endpoint:        "127.0.0.1:9001",
 	AccessKeyID:     "minio",
 	SecretAccessKey: "minio123",
 	UseSSL:          false,
-}
-
-func WithEndpoint(e string) clientOption {
-	return func(c *client) {
-		c.Endpoint = e
-	}
 }
 
 func WithAccessKeyID(a string) clientOption {
@@ -58,13 +50,12 @@ func WithNewMinioClient(n *minio.Client) clientOption {
 	}
 }
 
-func (c *client) GetMinioClient() *minio.Client {
+func (c *client) GetMinioClient(EndPoint string) *minio.Client {
 	return c.NewMinioClient
 }
 
 func NewClient(options client, newMinioClient *minio.Client) Client {
 	return &client{
-		Endpoint:        options.Endpoint,
 		AccessKeyID:     options.AccessKeyID,
 		SecretAccessKey: options.SecretAccessKey,
 		UseSSL:          options.UseSSL,
@@ -72,13 +63,13 @@ func NewClient(options client, newMinioClient *minio.Client) Client {
 	}
 }
 
-func NewMinioClient(opts ...clientOption) (Client, error) {
+func NewMinioClient(EndPoint string, opts ...clientOption) (Client, error) {
 	options := defaultClientOptions
 	for _, o := range opts {
 		o(&options)
 	}
 
-	newMinioClient, err := minio.New(options.Endpoint, options.AccessKeyID, options.SecretAccessKey, options.UseSSL)
+	newMinioClient, err := minio.New(EndPoint, options.AccessKeyID, options.SecretAccessKey, options.UseSSL)
 	if err != nil {
 		return nil, err
 	}

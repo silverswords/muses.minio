@@ -18,7 +18,7 @@ func Save(bucketName string, objectName string) error {
 		log.Fatalln(err)
 	}
 
-	exists, err := checkBucket(bucketName)
+	exists, err := CheckBucket(bucketName)
 	if err != nil {
 		log.Fatalln(err)
 		return err
