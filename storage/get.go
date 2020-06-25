@@ -6,7 +6,8 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func Get(bucketName string, objectName string) (*minio.Object, error) {
+func (m *minioClient) Get(bucketName string, objectName string) (*minio.Object, error) {
+	minioClient := m.newMinioClient
 	minioObject := objectCache.Get(bucketName, objectName)
 	if minioObject == nil {
 		minioObject, err := minioClient.GetObject(bucketName, objectName, minio.GetObjectOptions{})

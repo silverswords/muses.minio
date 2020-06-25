@@ -36,8 +36,9 @@ func (b *bucketObjectCache) Set(bucketName string, objectName string) error {
 	b.Lock()
 	defer b.Unlock()
 
+	mc := Open("minio://minio:minio123@127.0.0.1:9001")
 	filePath := bucketName + "/" + objectName
-	minioObject, err := minioClient.GetObject(bucketName, objectName, minio.GetObjectOptions{})
+	minioObject, err := mc.Get(bucketName, objectName)
 	b.items[filePath] = minioObject
 
 	return err

@@ -1,79 +1,64 @@
 package storage
 
 import (
+	"fmt"
+	"log"
+	"net/url"
+
 	"github.com/minio/minio-go/v6"
 )
 
 type Client interface {
-	GetMinioClient(EndPoint string) *minio.Client
+	setScheme(scheme string)
 }
 
 type client struct {
-	AccessKeyID     string
-	SecretAccessKey string
-	UseSSL          bool
-	NewMinioClient  *minio.Client
+	scheme string
 }
 
-type clientOption func(*client)
-
-var new Client
-var minioClient = new.GetMinioClient("127.0.0.1:9001")
-
-var defaultClientOptions = client{
-	AccessKeyID:     "minio",
-	SecretAccessKey: "minio123",
-	UseSSL:          false,
+type minioClient struct {
+	client
+	endPoint        string
+	accessKeyId     string
+	secretAccessKey string
+	useSSl          bool
+	newMinioClient  *minio.Client
 }
 
-func WithAccessKeyID(a string) clientOption {
-	return func(c *client) {
-		c.AccessKeyID = a
-	}
+func (c *client) setScheme(scheme string) {
+	c.scheme = scheme
 }
 
-func WithSecretAccessKey(s string) clientOption {
-	return func(c *client) {
-		c.SecretAccessKey = s
-	}
-}
+func Open(s string) *minioClient {
+	useSSl := true
 
-func WithUseSSL(u bool) clientOption {
-	return func(c *client) {
-		c.UseSSL = u
-	}
-}
-
-func WithNewMinioClient(n *minio.Client) clientOption {
-	return func(c *client) {
-		c.NewMinioClient = n
-	}
-}
-
-func (c *client) GetMinioClient(EndPoint string) *minio.Client {
-	return c.NewMinioClient
-}
-
-func NewClient(options client, newMinioClient *minio.Client) Client {
-	return &client{
-		AccessKeyID:     options.AccessKeyID,
-		SecretAccessKey: options.SecretAccessKey,
-		UseSSL:          options.UseSSL,
-		NewMinioClient:  newMinioClient,
-	}
-}
-
-func NewMinioClient(EndPoint string, opts ...clientOption) (Client, error) {
-	options := defaultClientOptions
-	for _, o := range opts {
-		o(&options)
-	}
-
-	newMinioClient, err := minio.New(EndPoint, options.AccessKeyID, options.SecretAccessKey, options.UseSSL)
+	u, err := url.Parse(s)
 	if err != nil {
-		return nil, err
+		log.Fatalln(err)
 	}
 
-	minioClient := NewClient(options, newMinioClient)
-	return minioClient, nil
+	p, _ := u.User.Password()
+
+	newMinioClient, err := minio.New(u.Host, u.User.Username(), p, useSSl)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return &minioClient{
+		client: client{
+			scheme: u.Scheme,
+		},
+		endPoint:        u.Host,
+		accessKeyId:     u.User.Username(),
+		secretAccessKey: p,
+		useSSl:          useSSl,
+		newMinioClient:  newMinioClient,
+	}
+}
+
+func GetClient(scheme string, url string) (Client, error) {
+	if scheme == "minio" {
+		return Open(url), nil
+	}
+	return nil, fmt.Errorf("Wrong scheme type passed")
 }
