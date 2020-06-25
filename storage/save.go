@@ -7,7 +7,7 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func (m *minioClient) Save(bucketName string, objectName string) error {
+func (m *MinioClient) Save(bucketName string, objectName string) error {
 	reader, err := os.Open(bucketName)
 	if err != nil {
 		log.Fatalln(err)
@@ -19,7 +19,7 @@ func (m *minioClient) Save(bucketName string, objectName string) error {
 	}
 
 	mc := Open("minio://minio:minio123@127.0.0.1:9001")
-	exists, err := mc.CheckBucket(bucketName)
+	exists, err := mc.checkBucket(bucketName)
 	if err != nil {
 		log.Fatalln(err)
 		return err
@@ -32,7 +32,7 @@ func (m *minioClient) Save(bucketName string, objectName string) error {
 			log.Fatalln(err)
 		}
 
-		err = objectCache.Set(bucketName, objectName)
+		err = objectCache.set(bucketName, objectName)
 		if err != nil {
 			log.Fatalln(err)
 		}

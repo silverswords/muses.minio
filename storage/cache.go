@@ -32,7 +32,7 @@ func (b *bucketObjectCache) Get(bucketName string, objectName string) *minio.Obj
 	return minioObject
 }
 
-func (b *bucketObjectCache) Set(bucketName string, objectName string) error {
+func (b *bucketObjectCache) set(bucketName string, objectName string) error {
 	b.Lock()
 	defer b.Unlock()
 

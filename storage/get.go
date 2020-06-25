@@ -6,7 +6,7 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func (m *minioClient) Get(bucketName string, objectName string) (*minio.Object, error) {
+func (m *MinioClient) Get(bucketName string, objectName string) (*minio.Object, error) {
 	minioClient := m.newMinioClient
 	minioObject := objectCache.Get(bucketName, objectName)
 	if minioObject == nil {
@@ -15,7 +15,7 @@ func (m *minioClient) Get(bucketName string, objectName string) (*minio.Object, 
 			return nil, err
 		}
 
-		err = objectCache.Set(bucketName, objectName)
+		err = objectCache.set(bucketName, objectName)
 		if err != nil {
 			log.Fatalln(err)
 		}
