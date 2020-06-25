@@ -36,9 +36,9 @@ func (bc *bucketObjectCache) set(bucketName string, objectName string) error {
 	bc.Lock()
 	defer bc.Unlock()
 
-	bk := newBucket(bucketName)
+	b := NewBucket(bucketName)
 	filePath := bucketName + "/" + objectName
-	minioObject, err := bk.Get(bucketName, objectName)
+	minioObject, err := b.Get(bucketName, objectName)
 	bc.items[filePath] = minioObject
 
 	return err

@@ -17,7 +17,7 @@ func checkBucket(bucketName string) (bool, error) {
 	return exists, err
 }
 
-func newBucket(bucketName string) *Bucket {
+func NewBucket(bucketName string) *Bucket {
 	location := "cn-north-1"
 	err := m.MakeBucket(bucketName, location)
 	if err != nil {
