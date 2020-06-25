@@ -8,7 +8,7 @@ import (
 )
 
 func (b *Bucket) Save(objectName string) error {
-	reader, err := os.Open(b.BucketName)
+	reader, err := os.Open(b.bucketName)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -18,19 +18,19 @@ func (b *Bucket) Save(objectName string) error {
 		log.Fatalln(err)
 	}
 
-	exists, err := checkBucket(b.BucketName)
+	exists, err := checkBucket(b.bucketName)
 	if err != nil {
 		log.Fatalln(err)
 		return err
 	}
 
 	if exists {
-		_, err = m.PutObject(b.BucketName, objectName, reader, objectStat.Size(), minio.PutObjectOptions{})
+		_, err = m.PutObject(b.bucketName, objectName, reader, objectStat.Size(), minio.PutObjectOptions{})
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		err = objectCache.set(b.BucketName, objectName)
+		err = objectCache.set(b.bucketName, objectName)
 		if err != nil {
 			log.Fatalln(err)
 		}

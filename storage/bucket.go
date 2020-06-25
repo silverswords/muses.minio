@@ -3,8 +3,8 @@ package storage
 import "log"
 
 type Bucket struct {
-	BucketName string
-	Location   string
+	bucketName string
+	location   string
 }
 
 func checkBucket(bucketName string) (bool, error) {
@@ -25,7 +25,7 @@ func NewBucket(bucketName string) *Bucket {
 	}
 
 	return &Bucket{
-		BucketName: bucketName,
-		Location:   location,
+		bucketName: bucketName,
+		location:   location,
 	}
 }
