@@ -16,7 +16,7 @@ type client struct {
 	scheme string
 }
 
-type MinioClient struct {
+type minioClient struct {
 	client
 	endPoint        string
 	accessKeyId     string
@@ -25,11 +25,14 @@ type MinioClient struct {
 	newMinioClient  *minio.Client
 }
 
+var new *minioClient
+var m = new.newMinioClient
+
 func (c *client) setScheme(scheme string) {
 	c.scheme = scheme
 }
 
-func Open(s string) *MinioClient {
+func Open(s string) *minioClient {
 	useSSl := true
 
 	u, err := url.Parse(s)
@@ -44,7 +47,7 @@ func Open(s string) *MinioClient {
 		log.Fatalln(err)
 	}
 
-	return &MinioClient{
+	return &minioClient{
 		client: client{
 			scheme: u.Scheme,
 		},

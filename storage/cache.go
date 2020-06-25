@@ -22,24 +22,24 @@ func newBucketObjectCache() *bucketObjectCache {
 	}
 }
 
-func (b *bucketObjectCache) Get(bucketName string, objectName string) *minio.Object {
-	b.RLock()
-	defer b.RUnlock()
+func (bc *bucketObjectCache) Get(bucketName string, objectName string) *minio.Object {
+	bc.RLock()
+	defer bc.RUnlock()
 
 	filePath := bucketName + "/" + objectName
-	minioObject := b.items[filePath]
+	minioObject := bc.items[filePath]
 
 	return minioObject
 }
 
-func (b *bucketObjectCache) set(bucketName string, objectName string) error {
-	b.Lock()
-	defer b.Unlock()
+func (bc *bucketObjectCache) set(bucketName string, objectName string) error {
+	bc.Lock()
+	defer bc.Unlock()
 
-	mc := Open("minio://minio:minio123@127.0.0.1:9001")
+	bk := newBucket(bucketName)
 	filePath := bucketName + "/" + objectName
-	minioObject, err := mc.Get(bucketName, objectName)
-	b.items[filePath] = minioObject
+	minioObject, err := bk.Get(bucketName, objectName)
+	bc.items[filePath] = minioObject
 
 	return err
 }
