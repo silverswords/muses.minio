@@ -25,14 +25,14 @@ type minioClient struct {
 	newMinioClient  *minio.Client
 }
 
-var new *minioClient
+var new = newMinioClient("minio://minio:minio123@127.0.0.1:9001")
 var m = new.newMinioClient
 
 func (c *client) setScheme(scheme string) {
 	c.scheme = scheme
 }
 
-func Open(s string) *minioClient {
+func newMinioClient(s string) *minioClient {
 	useSSl := true
 
 	u, err := url.Parse(s)
@@ -61,7 +61,7 @@ func Open(s string) *minioClient {
 
 func GetClient(scheme string, url string) (Client, error) {
 	if scheme == "minio" {
-		return Open(url), nil
+		return newMinioClient(url), nil
 	}
 	return nil, fmt.Errorf("Wrong scheme type passed")
 }
