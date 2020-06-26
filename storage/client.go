@@ -9,30 +9,23 @@ import (
 )
 
 type Client interface {
-	setScheme(scheme string)
+	getMinioClient() *minio.Client
 }
 
 type client struct {
-	scheme string
+	url string
 }
 
 type minioClient struct {
 	client
-	endPoint        string
-	accessKeyId     string
-	secretAccessKey string
-	useSSl          bool
-	newMinioClient  *minio.Client
+	newMinioClient *minio.Client
 }
 
-var new = newMinioClient("minio://minio:minio123@127.0.0.1:9001")
-var m = new.newMinioClient
-
-func (c *client) setScheme(scheme string) {
-	c.scheme = scheme
+func (m *minioClient) getMinioClient() *minio.Client {
+	return m.newMinioClient
 }
 
-func newMinioClient(s string) *minioClient {
+func newMinioClient(s string) Client {
 	useSSl := true
 
 	u, err := url.Parse(s)
@@ -49,19 +42,20 @@ func newMinioClient(s string) *minioClient {
 
 	return &minioClient{
 		client: client{
-			scheme: u.Scheme,
+			url: s,
 		},
-		endPoint:        u.Host,
-		accessKeyId:     u.User.Username(),
-		secretAccessKey: p,
-		useSSl:          useSSl,
-		newMinioClient:  newMinioClient,
+		newMinioClient: newMinioClient,
 	}
 }
 
-func GetClient(scheme string, url string) (Client, error) {
-	if scheme == "minio" {
-		return newMinioClient(url), nil
+func newClient(s string) (Client, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	if u.Scheme == "minio" {
+		return newMinioClient(s), nil
 	}
 	return nil, fmt.Errorf("Wrong scheme type passed")
 }

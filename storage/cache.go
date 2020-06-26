@@ -6,8 +6,6 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-var objectCache *bucketObjectCache
-
 type bucketObjectCache struct {
 	// mutex is used for handling the concurrent
 	// read/write requests for cache.
@@ -16,30 +14,23 @@ type bucketObjectCache struct {
 	items map[string]*minio.Object
 }
 
-func newBucketObjectCache() *bucketObjectCache {
-	return &bucketObjectCache{
-		items: make(map[string]*minio.Object),
-	}
-}
+func (b *Bucket) cacheGet(objectName string) *minio.Object {
+	b.RLock()
+	defer b.RUnlock()
 
-func (bc *bucketObjectCache) Get(bucketName string, objectName string) *minio.Object {
-	bc.RLock()
-	defer bc.RUnlock()
-
-	filePath := bucketName + "/" + objectName
-	minioObject := bc.items[filePath]
+	filePath := objectName
+	minioObject := b.items[filePath]
 
 	return minioObject
 }
 
-func (bc *bucketObjectCache) set(bucketName string, objectName string) error {
-	bc.Lock()
-	defer bc.Unlock()
+func (b *Bucket) cacheSave(objectName string) error {
+	b.Lock()
+	defer b.Unlock()
 
-	b := NewBucket(bucketName)
-	filePath := bucketName + "/" + objectName
-	minioObject, err := b.Get(bucketName, objectName)
-	bc.items[filePath] = minioObject
+	filePath := objectName
+	minioObject, err := b.Get(objectName)
+	b.items[filePath] = minioObject
 
 	return err
 }

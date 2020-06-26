@@ -18,19 +18,19 @@ func (b *Bucket) Save(objectName string) error {
 		log.Fatalln(err)
 	}
 
-	exists, err := checkBucket(b.bucketName)
+	exists, err := b.checkBucket()
 	if err != nil {
 		log.Fatalln(err)
 		return err
 	}
 
 	if exists {
-		_, err = m.PutObject(b.bucketName, objectName, reader, objectStat.Size(), minio.PutObjectOptions{})
+		_, err = b.newMinioClient.PutObject(b.bucketName, objectName, reader, objectStat.Size(), minio.PutObjectOptions{})
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		err = objectCache.set(b.bucketName, objectName)
+		err = b.cacheSave(objectName)
 		if err != nil {
 			log.Fatalln(err)
 		}
