@@ -9,7 +9,7 @@ import (
 func (b *Bucket) Get(objectName string) (*minio.Object, error) {
 	minioObject := b.cacheGet(objectName)
 	if minioObject == nil {
-		minioObject, err := b.newMinioClient.GetObject(b.bucketName, objectName, minio.GetObjectOptions{})
+		minioObject, err := b.client.getMinioClient().GetObject(b.bucketName, objectName, minio.GetObjectOptions{})
 		if err != nil {
 			return nil, err
 		}

@@ -25,7 +25,7 @@ func (b *Bucket) Save(objectName string) error {
 	}
 
 	if exists {
-		_, err = b.newMinioClient.PutObject(b.bucketName, objectName, reader, objectStat.Size(), minio.PutObjectOptions{})
+		_, err = b.client.getMinioClient().PutObject(b.bucketName, objectName, reader, objectStat.Size(), minio.PutObjectOptions{})
 		if err != nil {
 			log.Fatalln(err)
 		}

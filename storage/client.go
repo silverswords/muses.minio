@@ -13,22 +13,17 @@ type Client interface {
 }
 
 type client struct {
-	url string
+	minioClient `yaml:"minioClient"`
 }
 
 type minioClient struct {
-	client
-	newMinioClient *minio.Client
+	url string `yaml:"url"`
+	// useSSl bool   `yaml:"useSSl"`
 }
 
 func (m *minioClient) getMinioClient() *minio.Client {
-	return m.newMinioClient
-}
-
-func newMinioClient(s string) Client {
 	useSSl := true
-
-	u, err := url.Parse(s)
+	u, err := url.Parse(m.url)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -39,12 +34,26 @@ func newMinioClient(s string) Client {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	return newMinioClient
+}
+
+func newMinioClient(s string) Client {
+	// useSSl := true
+
+	// u, err := url.Parse(s)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	// p, _ := u.User.Password()
+
+	// newMinioClient, err := minio.New(u.Host, u.User.Username(), p, useSSl)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
 
 	return &minioClient{
-		client: client{
-			url: s,
-		},
-		newMinioClient: newMinioClient,
+		url: s,
 	}
 }
 
