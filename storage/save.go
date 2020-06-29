@@ -7,13 +7,8 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func (b *Bucket) Save(objectName string) error {
-	reader, err := os.Open(b.bucketName)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer reader.Close()
-	objectStat, err := reader.Stat()
+func (b *Bucket) Save(objectName string, object *os.File) error {
+	objectStat, err := object.Stat()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -25,7 +20,7 @@ func (b *Bucket) Save(objectName string) error {
 	}
 
 	if exists {
-		_, err = b.client.getMinioClient().PutObject(b.bucketName, objectName, reader, objectStat.Size(), minio.PutObjectOptions{})
+		_, err = b.client.getMinioClient().PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
 		if err != nil {
 			log.Fatalln(err)
 		}

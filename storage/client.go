@@ -38,20 +38,6 @@ func (m *minioClient) getMinioClient() *minio.Client {
 }
 
 func newMinioClient(s string) Client {
-	// useSSl := true
-
-	// u, err := url.Parse(s)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	// p, _ := u.User.Password()
-
-	// newMinioClient, err := minio.New(u.Host, u.User.Username(), p, useSSl)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
 	return &minioClient{
 		url: s,
 	}
