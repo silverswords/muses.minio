@@ -1,27 +1,34 @@
 package storage
 
 import (
-	"io/ioutil"
 	"log"
 
 	"github.com/minio/minio-go/v6"
-	"gopkg.in/yaml.v2"
 )
 
 type Bucket struct {
 	bucketName        string `yaml:"bucketName"`
+	location          string
 	client            `yaml:"client"`
 	bucketObjectCache `yaml:"bucketObjectCache"`
 }
 
+// func newBucket(s string, bucketName string) *Bucket {
+// 	return &Bucket{
+// 		bucketName: bucketName,
+// 		client: client{
+// 			minioClient: minioClient{
+// 				url: s,
+// 			},
+// 		},
+// 		bucketObjectCache: bucketObjectCache{
+// 			items: make(map[string]*minio.Object),
+// 		},
+// 	}
+// }
+
 func newBucket(s string, bucketName string) *Bucket {
 	return &Bucket{
-		bucketName: bucketName,
-		client: client{
-			minioClient: minioClient{
-				url: s,
-			},
-		},
 		bucketObjectCache: bucketObjectCache{
 			items: make(map[string]*minio.Object),
 		},
@@ -29,8 +36,7 @@ func newBucket(s string, bucketName string) *Bucket {
 }
 
 func (b *Bucket) makeBucket() error {
-	location := "cn-north-1"
-	err := b.client.getMinioClient().MakeBucket(b.bucketName, location)
+	err := b.client.getMinioClient().MakeBucket(b.bucketName, b.location)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -46,16 +52,4 @@ func (b *Bucket) checkBucket() (bool, error) {
 	}
 
 	return exists, err
-}
-
-func (b *Bucket) GetConf() *Bucket {
-	yamlFile, err := ioutil.ReadFile("./config.yml")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	err = yaml.Unmarshal(yamlFile, b)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return b
 }

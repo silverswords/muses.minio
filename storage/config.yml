@@ -1,4 +1,0 @@
-bucketName: one
-client:
-  minioClient:
-    url: minio://minio:minio123@127.0.0.1:9001

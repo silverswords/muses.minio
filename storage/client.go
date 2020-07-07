@@ -9,7 +9,7 @@ import (
 )
 
 type Client interface {
-	getMinioClient() *minio.Client
+	// getMinioClient() *minio.Client
 }
 
 type client struct {
