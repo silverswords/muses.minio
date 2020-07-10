@@ -7,36 +7,24 @@ import (
 )
 
 type Bucket struct {
-	bucketName        string `yaml:"bucketName"`
-	location          string
-	client            `yaml:"client"`
-	bucketObjectCache `yaml:"bucketObjectCache"`
+	bucketName string
+	location   string
+	client
+	bucketObjectCache
 }
 
-// func newBucket(s string, bucketName string) *Bucket {
-// 	return &Bucket{
-// 		bucketName: bucketName,
-// 		client: client{
-// 			minioClient: minioClient{
-// 				url: s,
-// 			},
-// 		},
-// 		bucketObjectCache: bucketObjectCache{
-// 			items: make(map[string]*minio.Object),
-// 		},
-// 	}
-// }
-
-func newBucket(s string, bucketName string) *Bucket {
+func NewBucket(bucketName, location string) *Bucket {
 	return &Bucket{
+		bucketName: bucketName,
+		location:   location,
 		bucketObjectCache: bucketObjectCache{
 			items: make(map[string]*minio.Object),
 		},
 	}
 }
 
-func (b *Bucket) makeBucket() error {
-	err := b.client.getMinioClient().MakeBucket(b.bucketName, b.location)
+func (b *Bucket) MakeBucket() error {
+	err := b.client.minioClient.MakeBucket(b.bucketName, b.location)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -44,8 +32,8 @@ func (b *Bucket) makeBucket() error {
 	return err
 }
 
-func (b *Bucket) checkBucket() (bool, error) {
-	exists, err := b.client.getMinioClient().BucketExists(b.bucketName)
+func (b *Bucket) CheckBucket() (bool, error) {
+	exists, err := b.client.minioClient.BucketExists(b.bucketName)
 	if err != nil {
 		log.Fatalln(err)
 		return false, err

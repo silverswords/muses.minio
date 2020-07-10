@@ -7,20 +7,20 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func (b *Bucket) Save(objectName string, object *os.File) error {
+func (b *Bucket) PutObject(objectName string, object *os.File) error {
 	objectStat, err := object.Stat()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	exists, err := b.checkBucket()
+	exists, err := b.CheckBucket()
 	if err != nil {
 		log.Fatalln(err)
 		return err
 	}
 
 	if exists {
-		_, err = b.client.getMinioClient().PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+		_, err = b.client.minioClient.PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
 		if err != nil {
 			log.Fatalln(err)
 		}

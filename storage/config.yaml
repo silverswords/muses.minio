@@ -1,7 +1,4 @@
-storageMediaType: application/octet-stream
-bucketConfig:
-  bucketName: one
-  location: cn-north-1
-  client:
-    minioClient:
-      url: minio://minio:minio123@127.0.0.1:9001
+endpoint: 127.0.0.1:9001
+accessKeyID: minio
+secretAccessKey: minio123
+secure: true

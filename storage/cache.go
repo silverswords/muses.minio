@@ -29,7 +29,7 @@ func (b *Bucket) cacheSave(objectName string) error {
 	defer b.Unlock()
 
 	filePath := objectName
-	minioObject, err := b.Get(objectName)
+	minioObject, err := b.GetObject(objectName)
 	b.items[filePath] = minioObject
 
 	return err

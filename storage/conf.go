@@ -6,13 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type bucketFactory struct {
-	Bucket           `yaml:"bucketConfig"`
-	storageMediaType string `yaml:"storageMediaType"`
-	// accessPermission string
-}
-
-func (b *bucketFactory) getConf() *bucketFactory {
+func (b *minioClient) getConf() *minioClient {
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./config.yaml")
 	viper.SetConfigType("yaml")
