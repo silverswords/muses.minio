@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func (b *minioClient) getConf() *minioClient {
+func (m *minioClient) getConf() *minioClient {
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./config.yaml")
 	viper.SetConfigType("yaml")
@@ -14,6 +14,6 @@ func (b *minioClient) getConf() *minioClient {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	viper.Unmarshal(&b) // 将配置信息绑定到结构体上
-	return b
+	viper.Unmarshal(&m) // 将配置信息绑定到结构体上
+	return m
 }

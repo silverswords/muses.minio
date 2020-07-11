@@ -16,10 +16,14 @@ type client struct {
 
 type minioClient struct {
 	// url             string `yaml:"url"`
-	endpoint        string `yaml:"endpoint"`
-	accessKeyID     string `yaml:"accessKeyID"`
-	secretAccessKey string `yaml:"secretAccessKey"`
-	secure          bool   `yaml:"secure"`
+	// endpoint        string `yaml:"endpoint"`
+	// accessKeyID     string `yaml:"accessKeyID"`
+	// secretAccessKey string `yaml:"secretAccessKey"`
+	// secure          bool   `yaml:"secure"`
+	endpoint        string
+	accessKeyID     string
+	secretAccessKey string
+	secure          bool
 }
 
 func (m *minioClient) getMinioClient() *client {
