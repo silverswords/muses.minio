@@ -14,9 +14,14 @@ type Bucket struct {
 }
 
 func NewBucket(bucketName, location string) *Bucket {
+	var m *minioClient
+	mc := getConf(m)
 	return &Bucket{
 		bucketName: bucketName,
 		location:   location,
+		client: client{
+			minioClient: getMinioClient(mc).minioClient,
+		},
 		bucketObjectCache: bucketObjectCache{
 			items: make(map[string]*minio.Object),
 		},

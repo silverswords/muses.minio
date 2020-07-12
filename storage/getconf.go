@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func (m *minioClient) getConf() *minioClient {
+func getConf(m *minioClient) *minioClient {
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./config.yaml")
 	viper.SetConfigType("yaml")

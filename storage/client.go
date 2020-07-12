@@ -6,35 +6,22 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-// type Client interface {
-// 	// getMinioClient() *minio.Client
-// }
+type Client interface {
+	getMinioClient() *minio.Client
+}
 
 type client struct {
 	minioClient *minio.Client
 }
 
 type minioClient struct {
-	// url             string `yaml:"url"`
-	// endpoint        string `yaml:"endpoint"`
-	// accessKeyID     string `yaml:"accessKeyID"`
-	// secretAccessKey string `yaml:"secretAccessKey"`
-	// secure          bool   `yaml:"secure"`
 	endpoint        string
 	accessKeyID     string
 	secretAccessKey string
 	secure          bool
 }
 
-func (m *minioClient) getMinioClient() *client {
-	// useSSl := true
-	// u, err := url.Parse(m.url)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	// p, _ := u.User.Password()
-
+func getMinioClient(m *minioClient) *client {
 	newMinioClient, err := minio.New(m.endpoint, m.accessKeyID, m.secretAccessKey, m.secure)
 	if err != nil {
 		log.Fatalln(err)
