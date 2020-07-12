@@ -30,21 +30,3 @@ func getMinioClient(m *minioClient) *client {
 		minioClient: newMinioClient,
 	}
 }
-
-// func newMinioClient(s string) Client {
-// 	return &minioClient{
-// 		url: s,
-// 	}
-// }
-
-// func newClient(s string) (Client, error) {
-// 	u, err := url.Parse(s)
-// 	if err != nil {
-// 		log.Fatalln(err)
-// 	}
-
-// 	if u.Scheme == "minio" {
-// 		return newMinioClient(s), nil
-// 	}
-// 	return nil, fmt.Errorf("Wrong scheme type passed")
-// }
