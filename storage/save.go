@@ -20,7 +20,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 	}
 
 	if exists {
-		_, err = b.client.minioClient.PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+		_, err = b.minioClient.PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
 		if err != nil {
 			log.Fatalln(err)
 		}

@@ -19,9 +19,10 @@ type minioClient struct {
 	accessKeyID     string
 	secretAccessKey string
 	secure          bool
+	weight          float64
 }
 
-func getMinioClient(m *minioClient) *client {
+func createMinioClient(m *minioClient) *client {
 	newMinioClient, err := minio.New(m.endpoint, m.accessKeyID, m.secretAccessKey, m.secure)
 	if err != nil {
 		log.Fatalln(err)
@@ -29,4 +30,14 @@ func getMinioClient(m *minioClient) *client {
 	return &client{
 		minioClient: newMinioClient,
 	}
+}
+
+func getMinioClients(config *config) []*minio.Client {
+	var client *client
+	var minioClients []*minio.Client
+	for _, v := range config.minioClients {
+		client = createMinioClient(v)
+		minioClients = append(minioClients, client.minioClient)
+	}
+	return minioClients
 }
