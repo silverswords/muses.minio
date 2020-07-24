@@ -7,13 +7,13 @@ import (
 )
 
 type config struct {
-	minioClients []*minioClient
+	Clients []map[string]string
 }
 
 func getConfig() *config {
 	var config config
-	viper.SetConfigName("config")
-	viper.AddConfigPath("./config.yaml")
+	viper.SetConfigName("config.yaml")
+	viper.AddConfigPath(".")
 	viper.SetConfigType("yaml")
 	err := viper.ReadInConfig()
 	if err != nil {

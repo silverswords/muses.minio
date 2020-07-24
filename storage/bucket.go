@@ -12,14 +12,14 @@ type Bucket struct {
 	clients     []*minio.Client
 	minioClient *minio.Client
 	bucketObjectCache
+	Weight
 }
 
 func NewBucket(bucketName, location string) *Bucket {
-	mc := getConfig()
 	return &Bucket{
 		bucketName: bucketName,
 		location:   location,
-		clients:    getMinioClients(mc),
+		clients:    getMinioClients(),
 		bucketObjectCache: bucketObjectCache{
 			items: make(map[string]*minio.Object),
 		},
@@ -27,12 +27,14 @@ func NewBucket(bucketName, location string) *Bucket {
 }
 
 func (b *Bucket) MakeBucket() error {
-	err := b.minioClient.MakeBucket(b.bucketName, b.location)
-	if err != nil {
-		log.Fatalln(err)
+	for _, v := range b.clients {
+		err := v.MakeBucket(b.bucketName, b.location)
+		if err != nil {
+			log.Fatalln(err)
+			return err
+		}
 	}
-
-	return err
+	return nil
 }
 
 func (b *Bucket) CheckBucket() (bool, error) {
