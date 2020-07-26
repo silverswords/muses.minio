@@ -6,31 +6,13 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-type StrategyClient interface {
-	Save(minio.Object) error
-}
-
-// 你这个 bucket 不是它定义的 bucket，你是它 bucket 更上一层的抽象
 type Bucket struct {
-	bucketName string
-	location   string
-	// minioClients []*minio.Client
+	bucketName            string
+	location              string
 	minioClientWithWeight map[string]strategyClient
 	bucketObjectCache
 	strategyClients []*strategyClient
 	strategy        string
-}
-
-type strategyClient struct {
-	client *minio.Client
-	weight float64
-}
-
-func newStrategyClient(client *minio.Client, weight float64) *strategyClient {
-	return &strategyClient{
-		client: client,
-		weight: weight,
-	}
 }
 
 func NewBucket(bucketName, location string, strategy string) *Bucket {

@@ -7,11 +7,17 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-// type Client interface {
-// 	getMinioClient() *minio.Client
-// }
+type strategyClient struct {
+	client *minio.Client
+	weight float64
+}
 
-type client *minio.Client
+func newStrategyClient(client *minio.Client, weight float64) *strategyClient {
+	return &strategyClient{
+		client: client,
+		weight: weight,
+	}
+}
 
 func getStrategyClients() []*strategyClient {
 	var strategyClients []*strategyClient
