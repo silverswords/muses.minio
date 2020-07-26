@@ -12,26 +12,46 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	exists, err := b.CheckBucket()
 	if err != nil {
 		log.Fatalln(err)
 		return err
 	}
 
-	if exists {
-		_, err = b.minioClient.PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
-		if err != nil {
-			log.Fatalln(err)
+	if b.strategy == "weightStrategy" {
+		c := b.saveByWeight()
+		if exists {
+			_, err = c.PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			err = b.cacheSave(objectName)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		} else {
+			log.Fatalln("Bucket does not exist.")
 		}
 
-		err = b.cacheSave(objectName)
-		if err != nil {
-			log.Fatalln(err)
+	}
+	if b.strategy == "multiWriteStrategy" {
+		for _, v := range b.strategyClients {
+			if exists {
+				_, err = v.client.PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+				if err != nil {
+					log.Fatalln(err)
+				}
+
+				err = b.cacheSave(objectName)
+				if err != nil {
+					log.Fatalln(err)
+				}
+			} else {
+				log.Fatalln("Bucket does not exist.")
+			}
 		}
-	} else {
-		log.Fatalln("Bucket does not exist.")
 	}
 
-	return err
+	return nil
 }

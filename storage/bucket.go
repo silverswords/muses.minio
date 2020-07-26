@@ -6,29 +6,48 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-type Bucket struct {
-	bucketName  string
-	location    string
-	clients     []*minio.Client
-	minioClient *minio.Client
-	bucketObjectCache
-	Weight
+type StrategyClient interface {
+	Save(minio.Object) error
 }
 
-func NewBucket(bucketName, location string) *Bucket {
+// 你这个 bucket 不是它定义的 bucket，你是它 bucket 更上一层的抽象
+type Bucket struct {
+	bucketName string
+	location   string
+	// minioClients []*minio.Client
+	minioClientWithWeight map[string]strategyClient
+	bucketObjectCache
+	strategyClients []*strategyClient
+	strategy        string
+}
+
+type strategyClient struct {
+	client *minio.Client
+	weight float64
+}
+
+func newStrategyClient(client *minio.Client, weight float64) *strategyClient {
+	return &strategyClient{
+		client: client,
+		weight: weight,
+	}
+}
+
+func NewBucket(bucketName, location string, strategy string) *Bucket {
 	return &Bucket{
 		bucketName: bucketName,
 		location:   location,
-		clients:    getMinioClients(),
 		bucketObjectCache: bucketObjectCache{
 			items: make(map[string]*minio.Object),
 		},
+		strategyClients: getStrategyClients(),
+		strategy:        strategy,
 	}
 }
 
 func (b *Bucket) MakeBucket() error {
-	for _, v := range b.clients {
-		err := v.MakeBucket(b.bucketName, b.location)
+	for _, v := range b.strategyClients {
+		err := v.client.MakeBucket(b.bucketName, b.location)
 		if err != nil {
 			log.Fatalln(err)
 			return err
@@ -38,11 +57,14 @@ func (b *Bucket) MakeBucket() error {
 }
 
 func (b *Bucket) CheckBucket() (bool, error) {
-	exists, err := b.minioClient.BucketExists(b.bucketName)
-	if err != nil {
-		log.Fatalln(err)
-		return false, err
+	var exists bool
+	for _, v := range b.strategyClients {
+		err := v.client.MakeBucket(b.bucketName, b.location)
+		exists, err = v.client.BucketExists(b.bucketName)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
-	return exists, err
+	return exists, nil
 }

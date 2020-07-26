@@ -4,8 +4,10 @@ clients:
     accessKeyID: minio
     secretAccessKey: minio123
     secure: true
+    weight: 0.5
   - minioClientName: client2
     endpoint: 127.0.0.1:9001
     accessKeyID: minio
     secretAccessKey: minio123
     secure: true
+    weight: 0.5
