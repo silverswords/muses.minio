@@ -9,12 +9,17 @@ import (
 func (b *Bucket) GetObject(objectName string) (*minio.Object, error) {
 	minioObject := b.cacheGet(objectName)
 	if minioObject == nil {
-		minioObject, err := b.strategyClients[0].client.GetObject(b.bucketName, objectName, minio.GetObjectOptions{})
-		if err != nil {
-			return nil, err
+		for i := 0; i < len(b.strategyClients); i++ {
+			minioObject, err := b.strategyClients[i].client.GetObject(b.bucketName, objectName, minio.GetObjectOptions{})
+			if err != nil {
+				return nil, err
+			}
+			if minioObject != nil {
+				break
+			}
 		}
 
-		err = b.cacheSave(objectName)
+		err := b.cacheSave(objectName)
 		if err != nil {
 			log.Fatalln(err)
 		}
