@@ -30,7 +30,10 @@ func (b *Bucket) cacheSave(objectName string) error {
 
 	filePath := objectName
 	minioObject, err := b.GetObject(objectName)
-	b.items[filePath] = minioObject
+	if minioObject != nil {
+		b.items[filePath] = minioObject
+		return nil
+	}
 
 	return err
 }
