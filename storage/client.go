@@ -22,7 +22,12 @@ func newStrategyClient(client *minio.Client, weight float64) *strategyClient {
 func getStrategyClients() []*strategyClient {
 	var strategyClients []*strategyClient
 	for _, v := range getConfig().Clients {
-		newMinioClient, err := minio.New(v["endpoint"], v["accessKeyID"], v["secretAccessKey"], true)
+		secure, err := strconv.ParseBool(v["secure"])
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		newMinioClient, err := minio.New(v["endpoint"], v["accessKeyID"], v["secretAccessKey"], secure)
 		if err != nil {
 			log.Fatalln(err)
 		}

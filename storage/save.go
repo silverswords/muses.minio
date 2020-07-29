@@ -7,12 +7,12 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func (b *Bucket) PutObject(objectName string, object *os.File) error {
+func (b *Bucket) PutObject(bucketName string, objectName string, object *os.File) error {
 	objectStat, err := object.Stat()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	exists, err := b.CheckBucket()
+	exists, err := b.CheckBucket(bucketName)
 	if err != nil {
 		log.Fatalln(err)
 		return err
@@ -21,12 +21,12 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 	if b.strategy == "weightStrategy" {
 		c := b.saveByWeight()
 		if exists {
-			_, err = c.PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+			_, err = c.PutObject(bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
 			if err != nil {
 				log.Fatalln(err)
 			}
 
-			err = b.cacheSave(objectName)
+			err = b.cacheSave(bucketName, objectName)
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -36,14 +36,14 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 
 	}
 	if b.strategy == "multiWriteStrategy" {
-		for _, v := range b.strategyClients {
+		for _, v := range getStrategyClients() {
 			if exists {
-				_, err = v.client.PutObject(b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+				_, err = v.client.PutObject(bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
 				if err != nil {
 					log.Fatalln(err)
 				}
 
-				err = b.cacheSave(objectName)
+				err = b.cacheSave(bucketName, objectName)
 				if err != nil {
 					log.Fatalln(err)
 				}

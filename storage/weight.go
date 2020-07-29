@@ -10,21 +10,22 @@ func (b *Bucket) saveByWeight() *minio.Client {
 	var minioClient *minio.Client
 	var weightflag float64
 	random := rand.Float64()
-	length := len(b.strategyClients)
+	length := len(getStrategyClients())
+	strategyClient := getStrategyClients()
 	for i := 0; i < length; i++ {
 		for j := 0; j < length-1-i; j++ {
-			if b.strategyClients[j].weight > b.strategyClients[j+1].weight {
-				b.strategyClients[j], b.strategyClients[j+1] = b.strategyClients[j+1], b.strategyClients[j]
+			if strategyClient[j].weight > strategyClient[j+1].weight {
+				strategyClient[j], strategyClient[j+1] = strategyClient[j+1], strategyClient[j]
 			}
 		}
 	}
 
-	for _, v := range b.strategyClients {
+	for _, v := range strategyClient {
 		weightflag += v.weight
 		v.weight = weightflag
 	}
 
-	for _, v := range b.strategyClients {
+	for _, v := range strategyClient {
 		if random < v.weight {
 			return v.client
 		}
