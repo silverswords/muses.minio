@@ -1,38 +1,39 @@
 package storage
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/minio/minio-go/v6"
 )
 
 type Bucket struct {
-	// bucketName            string
-	// location              string
-	minioClientWithWeight map[string]strategyClient
+	bucketName string
+	location   string
+	// minioClientWithWeight map[string]strategyClient
 	bucketObjectCache
-	// strategyClients []*strategyClient
 	strategy string
 }
 
 func NewBucket(bucketName, location string, strategy string) *Bucket {
-	for _, v := range getStrategyClients() {
-		err := v.client.MakeBucket(bucketName, location)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
-
 	return &Bucket{
-		// bucketName: bucketName,
-		// location:   location,
-		bucketObjectCache: bucketObjectCache{
-			items: make(map[string]*minio.Object),
-		},
+		bucketName: bucketName,
+		location:   location,
+		// bucketObjectCache: bucketObjectCache{
+		// 	items: make(map[string]*minio.Object),
+		// },
 		// strategyClients: getStrategyClients(),
 		strategy: strategy,
 	}
+}
+
+func (b *Bucket) MakeBucket() error {
+	for _, v := range getStrategyClients() {
+		err := v.client.MakeBucket(b.bucketName, b.location)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // func (b *Bucket) MakeBucket() error {
@@ -48,13 +49,11 @@ func NewBucket(bucketName, location string, strategy string) *Bucket {
 
 func (b *Bucket) CheckBucket(bucketName string) (bool, error) {
 	var exists bool
+	var err error
 	for _, v := range getStrategyClients() {
-		exists, err := v.client.BucketExists(bucketName)
+		exists, err = v.client.BucketExists(bucketName)
 		if err != nil {
 			log.Fatalln(err)
-		}
-		if exists == false {
-			fmt.Printf("%s does not exist.", bucketName)
 		}
 	}
 
@@ -69,4 +68,15 @@ func (b *Bucket) ListedBucket() []minio.BucketInfo {
 	}
 
 	return buckets
+}
+
+func (b *Bucket) RemoveBucket(bucketName string) error {
+	for _, v := range getStrategyClients() {
+		err := v.client.RemoveBucket(bucketName)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

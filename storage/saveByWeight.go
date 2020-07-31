@@ -2,6 +2,7 @@ package storage
 
 import (
 	"math/rand"
+	"time"
 
 	"github.com/minio/minio-go/v6"
 )
@@ -9,7 +10,9 @@ import (
 func (b *Bucket) saveByWeight() *minio.Client {
 	var minioClient *minio.Client
 	var weightflag float64
-	random := rand.Float64()
+	s := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(s)
+	random := r.Float64()
 	length := len(getStrategyClients())
 	strategyClient := getStrategyClients()
 	for i := 0; i < length; i++ {

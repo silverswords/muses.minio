@@ -24,16 +24,20 @@ func (b *Bucket) cacheGet(objectName string) *minio.Object {
 	return minioObject
 }
 
-func (b *Bucket) cacheSave(bucketName string, objectName string) error {
+func (b *Bucket) cacheSave(objectName string, minioObject *minio.Object) {
 	b.Lock()
 	defer b.Unlock()
 
 	filePath := objectName
-	minioObject, err := b.GetObject(bucketName, objectName)
+	// minioObject, err := b.GetObject(bucketName, objectName)
 	if minioObject != nil {
 		b.items[filePath] = minioObject
-		return nil
 	}
+}
 
-	return err
+func (b *Bucket) cacheDelete(objectName string) {
+	b.Lock()
+	defer b.Unlock()
+
+	delete(b.items, objectName)
 }

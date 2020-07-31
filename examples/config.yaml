@@ -1,13 +1,13 @@
 clients:
   - minioClientName: client1
-    endpoint: 127.0.0.1:9001
+    endpoint: 192.168.0.100:9001
     accessKeyID: minio
     secretAccessKey: minio123
-    secure: true
-    weight: 0.5
+    secure: false
+    weight: 0.3
   - minioClientName: client2
-    endpoint: 127.0.0.1:9001
+    endpoint: 192.168.0.102:9001
     accessKeyID: minio
     secretAccessKey: minio123
-    secure: true
-    weight: 0.5
+    secure: false
+    weight: 0.7
