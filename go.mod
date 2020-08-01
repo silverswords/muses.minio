@@ -6,6 +6,8 @@ require (
 	github.com/coredns/coredns v1.6.9 // indirect
 	github.com/coreos/etcd v3.3.22+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
+	github.com/go-redis/cache/v8 v8.0.0-beta.11
+	github.com/go-redis/redis/v8 v8.0.0-beta.7
 	github.com/minio/md5-simd v1.1.0 // indirect
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/minio/minio-go/v6 v6.0.55

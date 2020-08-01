@@ -58,5 +58,8 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 		// }
 	}
 
+	var buf []byte
+	b.setCacheObject(buf, objectName)
+
 	return nil
 }

@@ -14,7 +14,6 @@ func main() {
 		log.Fatalln(err)
 	}
 	defer object.Close()
-
 	b := storage.NewBucket("test", "cn-north-1", "weightStrategy")
 
 	exists, err := b.CheckBucket("test")

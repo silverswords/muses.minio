@@ -1,43 +1,63 @@
 package storage
 
 import (
-	"sync"
+	"context"
+	"log"
+	"time"
 
-	"github.com/minio/minio-go/v6"
+	"github.com/go-redis/cache/v8"
+	"github.com/go-redis/redis/v8"
 )
 
-type bucketObjectCache struct {
-	// mutex is used for handling the concurrent
-	// read/write requests for cache.
-	sync.RWMutex
-
-	items map[string]*minio.Object
+type objectCache struct {
+	ctx context.Context
 }
 
-func (b *Bucket) cacheGet(objectName string) *minio.Object {
-	b.RLock()
-	defer b.RUnlock()
+//func NewObjectCache(ctx context.Context, objectName string) *objectCache {
+//	return &objectCache{
+//		ctx: ctx,
+//		key: objectName,
+//	}
+//}
 
-	filePath := objectName
-	minioObject := b.items[filePath]
+func newCache() *cache.Cache {
+	ring := redis.NewRing(&redis.RingOptions{
+		Addrs: map[string]string{
+			"server": ":6379",
+		},
+	})
 
-	return minioObject
+	c := cache.New(&cache.Options{
+		Redis: ring,
+	})
+
+	return c
 }
 
-func (b *Bucket) cacheSave(objectName string, minioObject *minio.Object) {
-	b.Lock()
-	defer b.Unlock()
-
-	filePath := objectName
-	// minioObject, err := b.GetObject(bucketName, objectName)
-	if minioObject != nil {
-		b.items[filePath] = minioObject
+func (o *objectCache) setCacheObject(minioObject []byte, objectName string) {
+	err := newCache().Set(&cache.Item{
+		Ctx:   o.ctx,
+		Key:   objectName,
+		Value: minioObject,
+		TTL:   time.Hour,
+	})
+	if err != nil {
+		log.Fatalln(err)
 	}
 }
 
-func (b *Bucket) cacheDelete(objectName string) {
-	b.Lock()
-	defer b.Unlock()
+func (o *objectCache) getCacheObject(objectName string) []byte {
+	var buf []byte
+	err := newCache().Get(o.ctx, objectName, &buf)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return buf
+}
 
-	delete(b.items, objectName)
+func (o *objectCache) deleteCacheObject(objectName string) {
+	err := newCache().Delete(o.ctx, objectName)
+	if err != nil {
+		log.Println(err)
+	}
 }

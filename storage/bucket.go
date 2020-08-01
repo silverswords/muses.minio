@@ -2,26 +2,25 @@ package storage
 
 import (
 	"log"
-
+	"context"
 	"github.com/minio/minio-go/v6"
 )
 
 type Bucket struct {
 	bucketName string
 	location   string
-	// minioClientWithWeight map[string]strategyClient
-	bucketObjectCache
+	objectCache
 	strategy string
 }
 
 func NewBucket(bucketName, location string, strategy string) *Bucket {
+	ctx := context.TODO()
 	return &Bucket{
 		bucketName: bucketName,
 		location:   location,
-		// bucketObjectCache: bucketObjectCache{
-		// 	items: make(map[string]*minio.Object),
-		// },
-		// strategyClients: getStrategyClients(),
+		objectCache: objectCache{
+			ctx,
+		},
 		strategy: strategy,
 	}
 }

@@ -8,7 +8,7 @@ func (b *Bucket) RemoveObject(objectName string) error {
 		}
 	}
 
-	// b.cacheDelete(objectName)
+	b.deleteCacheObject(objectName)
 
 	return nil
 }

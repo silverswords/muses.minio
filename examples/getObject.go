@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/silverswords/muses.minio/storage"
+	"io"
+	"log"
+	"os"
 )
 
 func main() {
-	b := storage.NewBucket("test", "cn-north-1", "weightStrategy")
+	b := storage.NewBucket("banana", "cn-north-1", "weightStrategy")
 
-	exists, err := b.CheckBucket("test")
+	exists, err := b.CheckBucket("banana")
 	if exists && err != nil {
 		log.Fatalln(err)
 	}
@@ -25,5 +26,10 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(minioObject)
+
+	localFile, err := os.Create("catfile")
+	_, err = io.Copy(localFile, minioObject)
+	if err != nil {
+		log.Println(err)
+	}
 }
