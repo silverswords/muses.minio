@@ -1,27 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/silverswords/muses.minio/storage"
 )
 
 func main() {
-	b := storage.NewBucket("test", "cn-north-1", "weightStrategy", "config.yaml", ".")
+	b := storage.NewBucket("test", "cn-north-1", "weightStrategy", "config.yaml", "../")
 	exists, err := b.CheckBucket("test")
 	if exists && err != nil {
-		log.Fatalln(err)
+		log.Println("errors in CheckBucket", err)
 	}
 	if !exists {
 		err = b.MakeBucket()
 		if err != nil {
-			log.Fatalln(err)
+			log.Println("errors in MakeBucket", err)
 		}
 	}
 
 	err = b.RemoveObject("cat")
 	if err != nil {
-		fmt.Println(err)
+		log.Println("errors in RemoveObject", err)
 	}
 }

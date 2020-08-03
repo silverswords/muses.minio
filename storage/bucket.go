@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"log"
 	"context"
 	"github.com/minio/minio-go/v6"
 )
@@ -31,7 +30,12 @@ func NewBucket(bucketName, location, strategy, configName, configPath string) *B
 }
 
 func (b *Bucket) MakeBucket() error {
-	for _, v := range b.getStrategyClients() {
+	clients, err := b.getStrategyClients()
+	if err != nil {
+		return err
+	}
+
+	for _, v := range clients {
 		err := v.client.MakeBucket(b.bucketName, b.location)
 		if err != nil {
 			return err
@@ -40,42 +44,46 @@ func (b *Bucket) MakeBucket() error {
 	return nil
 }
 
-// func (b *Bucket) MakeBucket() error {
-// 	for _, v := range b.strategyClients {
-// 		err := v.client.MakeBucket(b.bucketName, b.location)
-// 		if err != nil {
-// 			log.Fatalln(err)
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
-
 func (b *Bucket) CheckBucket(bucketName string) (bool, error) {
 	var exists bool
 	var err error
-	for _, v := range b.getStrategyClients() {
+	clients, err := b.getStrategyClients()
+	if err != nil {
+		return false, err
+	}
+
+	for _, v := range clients {
 		exists, err = v.client.BucketExists(bucketName)
 		if err != nil {
-			log.Fatalln(err)
+			return false, err
 		}
 	}
 
 	return exists, nil
 }
 
-func (b *Bucket) ListedBucket() []minio.BucketInfo {
-	minioClient := b.getStrategyClients()[0].client
-	buckets, err := minioClient.ListBuckets()
+func (b *Bucket) ListedBucket() ([]minio.BucketInfo, error) {
+	clients, err := b.getStrategyClients()
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
-	return buckets
+	minioClient := clients[0].client
+	buckets, err := minioClient.ListBuckets()
+	if err != nil {
+		return nil, err
+	}
+
+	return buckets, err
 }
 
 func (b *Bucket) RemoveBucket(bucketName string) error {
-	for _, v := range b.getStrategyClients() {
+	clients, err := b.getStrategyClients()
+	if err != nil {
+		return err
+	}
+
+	for _, v := range clients {
 		err := v.client.RemoveBucket(bucketName)
 		if err != nil {
 			return err

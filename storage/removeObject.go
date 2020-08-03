@@ -1,7 +1,12 @@
 package storage
 
 func (b *Bucket) RemoveObject(objectName string) error {
-	for _, v := range b.getStrategyClients() {
+	clients, err := b.getStrategyClients()
+	if err != nil {
+		return err
+	}
+
+	for _, v := range clients {
 		err := v.client.RemoveObject(b.bucketName, objectName)
 		if err != nil {
 			return err

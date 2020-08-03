@@ -7,14 +7,20 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func (b *Bucket) saveByWeight() *minio.Client {
+func (b *Bucket) saveByWeight() (*minio.Client, error) {
 	var minioClient *minio.Client
 	var weightflag float64
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
 	random := r.Float64()
-	length := len(b.getStrategyClients())
-	strategyClient := b.getStrategyClients()
+
+	clients, err := b.getStrategyClients()
+	if err != nil {
+		return nil, err
+	}
+
+	length := len(clients)
+	strategyClient := clients
 	for i := 0; i < length; i++ {
 		for j := 0; j < length-1-i; j++ {
 			if strategyClient[j].weight > strategyClient[j+1].weight {
@@ -30,9 +36,9 @@ func (b *Bucket) saveByWeight() *minio.Client {
 
 	for _, v := range strategyClient {
 		if random < v.weight {
-			return v.client
+			return v.client, nil
 		}
 	}
 
-	return minioClient
+	return minioClient, nil
 }

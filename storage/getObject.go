@@ -3,19 +3,23 @@ package storage
 import (
 	"github.com/minio/minio-go/v6"
 	"io"
-	"log"
 )
 
 func (b *Bucket) GetObject(objectName string) ([]byte, error) {
-	var err error
 	var minioObject *minio.Object
-	var buf []byte
-	buf = b.getCacheObject(objectName)
+	buf, err := b.getCacheObject(objectName)
+	if err == nil && buf != nil {
+		return buf, nil
+	}
+
+	clients, err := b.getStrategyClients()
+	if err != nil {
+		return nil, err
+	}
 
 	if buf == nil {
-		var object []byte
-		for i := 0; i < len(b.getStrategyClients()); i++ {
-			minioObject, err = b.getStrategyClients()[i].client.GetObject(b.bucketName, objectName, minio.GetObjectOptions{})
+		for i := 0; i < len(clients); i++ {
+			minioObject, err = clients[i].client.GetObject(b.bucketName, objectName, minio.GetObjectOptions{})
 			if err != nil {
 				return nil, err
 			}
@@ -23,14 +27,14 @@ func (b *Bucket) GetObject(objectName string) ([]byte, error) {
 				break
 			}
 		}
-		_, err = io.ReadFull(minioObject, object)
+
+		stat, err := minioObject.Stat()
+		buf = make([]byte, stat.Size)
+		_, err = io.ReadFull(minioObject, buf)
 		if err != nil {
-			log.Fatalln(err)
+			return nil, err
 		}
-
-		buf = object
 	}
-
 
 	return buf, nil
 }

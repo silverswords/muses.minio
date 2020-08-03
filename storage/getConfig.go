@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"log"
-
 	"github.com/spf13/viper"
 )
 
@@ -15,20 +13,20 @@ type configInfo struct {
 	configPath string
 }
 
-func (b *Bucket) getConfig() *config {
+func (b *Bucket) getConfig() (*config, error) {
 	var config config
 	viper.SetConfigName(b.configName)
 	viper.AddConfigPath(b.configPath)
 	viper.SetConfigType("yaml")
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
 	err = viper.Unmarshal(&config)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
-	return &config
+	return &config, nil
 }

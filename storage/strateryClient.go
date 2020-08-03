@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"log"
 	"strconv"
 
 	"github.com/minio/minio-go/v6"
@@ -19,30 +18,35 @@ func newStrategyClient(client *minio.Client, weight float64) *strategyClient {
 	}
 }
 
-func (b *Bucket) getStrategyClients() []*strategyClient {
+func (b *Bucket) getStrategyClients() ([]*strategyClient, error) {
 	var strategyClients []*strategyClient
-	for _, v := range b.getConfig().Clients {
+	config, err := b.getConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range config.Clients {
 		secure, err := strconv.ParseBool(v["secure"])
 		if err != nil {
-			log.Fatalln(err)
+			return nil, err
 		}
 
 		newMinioClient, err := minio.New(v["endpoint"], v["accessKeyID"], v["secretAccessKey"], secure)
 		if err != nil {
-			log.Fatalln(err)
+			return nil, err
 		}
 
 		weight, err := strconv.ParseFloat(v["weight"], 64)
 		if err != nil {
-			log.Fatalln(err)
+			return nil, err
 		}
 
 		strategyClient := newStrategyClient(newMinioClient, weight)
 		if err != nil {
-			log.Fatalln(err)
+			return nil, err
 		}
 
 		strategyClients = append(strategyClients, strategyClient)
 	}
-	return strategyClients
+	return strategyClients, nil
 }
