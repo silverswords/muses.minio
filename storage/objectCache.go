@@ -13,13 +13,6 @@ type objectCache struct {
 	ctx context.Context
 }
 
-//func NewObjectCache(ctx context.Context, objectName string) *objectCache {
-//	return &objectCache{
-//		ctx: ctx,
-//		key: objectName,
-//	}
-//}
-
 func newCache() *cache.Cache {
 	ring := redis.NewRing(&redis.RingOptions{
 		Addrs: map[string]string{
@@ -51,6 +44,7 @@ func (o *objectCache) getCacheObject(objectName string) []byte {
 	err := newCache().Get(o.ctx, objectName, &buf)
 	if err != nil {
 		log.Fatalln(err)
+		return nil
 	}
 	return buf
 }

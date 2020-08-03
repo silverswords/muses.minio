@@ -19,9 +19,9 @@ func newStrategyClient(client *minio.Client, weight float64) *strategyClient {
 	}
 }
 
-func getStrategyClients() []*strategyClient {
+func (b *Bucket) getStrategyClients() []*strategyClient {
 	var strategyClients []*strategyClient
-	for _, v := range getConfig().Clients {
+	for _, v := range b.getConfig().Clients {
 		secure, err := strconv.ParseBool(v["secure"])
 		if err != nil {
 			log.Fatalln(err)

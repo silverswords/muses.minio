@@ -8,8 +8,7 @@ import (
 )
 
 func main() {
-	b := storage.NewBucket("test", "cn-north-1", "weightStrategy")
-
+	b := storage.NewBucket("test", "cn-north-1", "weightStrategy", "config.yaml", ".")
 	err := b.MakeBucket()
 	if err != nil {
 		log.Fatalln(err)

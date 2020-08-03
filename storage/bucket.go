@@ -11,9 +11,10 @@ type Bucket struct {
 	location   string
 	objectCache
 	strategy string
+	configInfo
 }
 
-func NewBucket(bucketName, location string, strategy string) *Bucket {
+func NewBucket(bucketName, location, strategy, configName, configPath string) *Bucket {
 	ctx := context.TODO()
 	return &Bucket{
 		bucketName: bucketName,
@@ -22,11 +23,15 @@ func NewBucket(bucketName, location string, strategy string) *Bucket {
 			ctx,
 		},
 		strategy: strategy,
+		configInfo: configInfo{
+			configName: configName,
+			configPath: configPath,
+		},
 	}
 }
 
 func (b *Bucket) MakeBucket() error {
-	for _, v := range getStrategyClients() {
+	for _, v := range b.getStrategyClients() {
 		err := v.client.MakeBucket(b.bucketName, b.location)
 		if err != nil {
 			return err
@@ -49,7 +54,7 @@ func (b *Bucket) MakeBucket() error {
 func (b *Bucket) CheckBucket(bucketName string) (bool, error) {
 	var exists bool
 	var err error
-	for _, v := range getStrategyClients() {
+	for _, v := range b.getStrategyClients() {
 		exists, err = v.client.BucketExists(bucketName)
 		if err != nil {
 			log.Fatalln(err)
@@ -60,7 +65,7 @@ func (b *Bucket) CheckBucket(bucketName string) (bool, error) {
 }
 
 func (b *Bucket) ListedBucket() []minio.BucketInfo {
-	minioClient := getStrategyClients()[0].client
+	minioClient := b.getStrategyClients()[0].client
 	buckets, err := minioClient.ListBuckets()
 	if err != nil {
 		log.Fatalln(err)
@@ -70,7 +75,7 @@ func (b *Bucket) ListedBucket() []minio.BucketInfo {
 }
 
 func (b *Bucket) RemoveBucket(bucketName string) error {
-	for _, v := range getStrategyClients() {
+	for _, v := range b.getStrategyClients() {
 		err := v.client.RemoveBucket(bucketName)
 		if err != nil {
 			return err

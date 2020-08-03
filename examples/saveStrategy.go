@@ -16,7 +16,7 @@ func main() {
 	defer object.Close()
 
 	// savebyweight
-	byWeight := storage.NewBucket("apple", "cn-north-1", "weightStrategy")
+	byWeight := storage.NewBucket("apple", "cn-north-1", "weightStrategy", "config.yaml", ".")
 
 	exists, err := byWeight.CheckBucket("apple")
 	if exists && err != nil {
@@ -35,8 +35,7 @@ func main() {
 	}
 
 	// multiwrite
-	multiwrite := storage.NewBucket("banana", "cn-north-1", "multiWriteStrategy")
-
+	multiwrite := storage.NewBucket("banana", "cn-north-1", "multiWriteStrategy", "config.yaml", ".")
 	exists, err = multiwrite.CheckBucket("banana")
 	if exists && err != nil {
 		log.Fatalln(err)

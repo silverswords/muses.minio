@@ -10,17 +10,22 @@ type config struct {
 	Clients []map[string]string
 }
 
-func getConfig() *config {
+type configInfo struct {
+	configName string
+	configPath string
+}
+
+func (b *Bucket) getConfig() *config {
 	var config config
-	viper.SetConfigName("config.yaml")
-	viper.AddConfigPath(".")
+	viper.SetConfigName(b.configName)
+	viper.AddConfigPath(b.configPath)
 	viper.SetConfigType("yaml")
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	err = viper.Unmarshal(&config) // 将配置信息绑定到结构体上
+	err = viper.Unmarshal(&config)
 	if err != nil {
 		log.Fatalln(err)
 	}

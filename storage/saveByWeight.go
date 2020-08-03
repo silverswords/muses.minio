@@ -13,8 +13,8 @@ func (b *Bucket) saveByWeight() *minio.Client {
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
 	random := r.Float64()
-	length := len(getStrategyClients())
-	strategyClient := getStrategyClients()
+	length := len(b.getStrategyClients())
+	strategyClient := b.getStrategyClients()
 	for i := 0; i < length; i++ {
 		for j := 0; j < length-1-i; j++ {
 			if strategyClient[j].weight > strategyClient[j+1].weight {

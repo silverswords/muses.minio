@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	b := storage.NewBucket("banana", "cn-north-1", "weightStrategy")
+	b := storage.NewBucket("banana", "cn-north-1", "weightStrategy", "config.yaml", ".")
 
 	exists, err := b.CheckBucket("banana")
 	if exists && err != nil {
@@ -26,10 +26,11 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println(minioObject)
 
-	localFile, err := os.Create("catfile")
-	_, err = io.Copy(localFile, minioObject)
-	if err != nil {
-		log.Println(err)
-	}
+	//localFile, err := os.Create("catfile")
+	//_, err = io.Copy(localFile, minioObject)
+	//if err != nil {
+	//	log.Println(err)
+	//}
 }
