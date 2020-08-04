@@ -7,24 +7,58 @@ import (
 
 type Bucket struct {
 	bucketName string
-	location   string
 	objectCache
-	strategy string
 	configInfo
+	BucketOptions
 }
 
-func NewBucket(bucketName, location, strategy, configName, configPath string) *Bucket {
+type BucketOptions struct {
+	location string
+	strategy string
+}
+
+type BucketOption func(*BucketOptions)
+
+func WithStrategy(strategy string) BucketOption {
+	return func(b *BucketOptions) {
+		b.strategy = strategy
+	}
+}
+
+func WithLocation(location string) BucketOption {
+	return func(b *BucketOptions) {
+		b.location = location
+	}
+}
+
+func NewBucket(bucketName, configName, configPath string, opts ...BucketOption) *Bucket {
+	const(
+		defaultStrategy = "multiWriteStrategy"
+		defaultLocation = "cn-north-1"
+	)
+
+	b := &BucketOptions{
+		defaultLocation,
+		defaultStrategy,
+	}
+
+	for _, opt := range opts {
+		opt(b)
+	}
+
 	ctx := context.TODO()
 	return &Bucket{
 		bucketName: bucketName,
-		location:   location,
 		objectCache: objectCache{
 			ctx,
 		},
-		strategy: strategy,
 		configInfo: configInfo{
 			configName: configName,
 			configPath: configPath,
+		},
+		BucketOptions: BucketOptions{
+			b.location,
+			b.strategy,
 		},
 	}
 }

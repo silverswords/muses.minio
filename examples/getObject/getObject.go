@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	b := storage.NewBucket("test", "cn-north-1", "weightStrategy", "config.yaml", "../")
+	b := storage.NewBucket("test", "config.yaml", "../", storage.WithStrategy("weightStrategy"))
 
 	exists, err := b.CheckBucket("test")
 	if exists && err != nil {

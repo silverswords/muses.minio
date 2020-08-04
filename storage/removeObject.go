@@ -13,7 +13,10 @@ func (b *Bucket) RemoveObject(objectName string) error {
 		}
 	}
 
-	b.deleteCacheObject(objectName)
+	err = b.deleteCacheObject(objectName)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

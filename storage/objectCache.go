@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-redis/cache/v8"
@@ -34,7 +33,6 @@ func (o *objectCache) setCacheObject(minioObject []byte, objectName string) erro
 		Value: minioObject,
 		TTL:   time.Hour,
 	})
-	fmt.Println("setCache", err)
 	if err != nil {
 		return err
 	}
@@ -44,7 +42,6 @@ func (o *objectCache) setCacheObject(minioObject []byte, objectName string) erro
 func (o *objectCache) getCacheObject(objectName string) ([]byte, error) {
 	var buf []byte
 	err := newCache().Get(o.ctx, objectName, &buf)
-	fmt.Println("getCache", err)
 	if err != nil {
 		return nil, err
 	}
