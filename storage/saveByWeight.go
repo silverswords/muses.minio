@@ -8,7 +8,6 @@ import (
 )
 
 func (b *Bucket) saveByWeight() (*minio.Client, error) {
-	var minioClient *minio.Client
 	var weightflag float64
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
@@ -40,5 +39,5 @@ func (b *Bucket) saveByWeight() (*minio.Client, error) {
 		}
 	}
 
-	return minioClient, nil
+	return nil, nil
 }

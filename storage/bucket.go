@@ -9,35 +9,35 @@ type Bucket struct {
 	bucketName string
 	objectCache
 	configInfo
-	BucketOptions
+	OtherOptions
 }
 
-type BucketOptions struct {
+type OtherOptions struct {
 	location string
 	strategy string
 }
 
-type BucketOption func(*BucketOptions)
+type OtherOption func(*OtherOptions)
 
-func WithStrategy(strategy string) BucketOption {
-	return func(b *BucketOptions) {
+func WithStrategy(strategy string) OtherOption {
+	return func(b *OtherOptions) {
 		b.strategy = strategy
 	}
 }
 
-func WithLocation(location string) BucketOption {
-	return func(b *BucketOptions) {
+func WithLocation(location string) OtherOption {
+	return func(b *OtherOptions) {
 		b.location = location
 	}
 }
 
-func NewBucket(bucketName, configName, configPath string, opts ...BucketOption) *Bucket {
+func NewBucket(bucketName, configName, configPath string, opts ...OtherOption) *Bucket {
 	const(
 		defaultStrategy = "multiWriteStrategy"
 		defaultLocation = "cn-north-1"
 	)
 
-	b := &BucketOptions{
+	b := &OtherOptions{
 		defaultLocation,
 		defaultStrategy,
 	}
@@ -56,7 +56,7 @@ func NewBucket(bucketName, configName, configPath string, opts ...BucketOption) 
 			configName: configName,
 			configPath: configPath,
 		},
-		BucketOptions: BucketOptions{
+		OtherOptions: OtherOptions{
 			b.location,
 			b.strategy,
 		},
