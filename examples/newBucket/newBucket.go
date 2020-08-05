@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	b := storage.NewBucket("test", "config.yaml", "../", storage.WithStrategy("weightStrategy"))
+	b := storage.NewBucket("test", "config.yaml", "../")
 	err := b.MakeBucket()
 	if err != nil {
 		log.Println("errors in MakeBucket", err)

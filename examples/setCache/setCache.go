@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-	b := storage.NewBucket("banana", "config.yaml", "../", storage.WithStrategy("weightStrategy"))
+	b := storage.NewBucket("test", "config.yaml", "../")
 
-	exists, err := b.CheckBucket("banana")
+	exists, err := b.CheckBucket("test")
 	if exists && err != nil {
 		log.Println("errors in CheckBucket", err)
 	}
@@ -24,7 +24,7 @@ func main() {
 		log.Println("errors in GetObject", err)
 	}
 
-	file, err := os.Create("file")
+	file, err := os.Create("testfile")
 	var buffer = bytes.NewBuffer(minioObject)
 	_, err = io.Copy(file, buffer)
 	if err != nil {
