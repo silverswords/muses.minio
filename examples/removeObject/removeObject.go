@@ -19,7 +19,7 @@ func main() {
 		}
 	}
 
-	err = b.RemoveObject("cat")
+	err = b.RemoveObject("moon")
 	if err != nil {
 		log.Println("errors in RemoveObject", err)
 	}

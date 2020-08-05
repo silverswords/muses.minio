@@ -80,7 +80,6 @@ func (b *Bucket) MakeBucket() error {
 
 func (b *Bucket) CheckBucket(bucketName string) (bool, error) {
 	var exists bool
-	var err error
 	clients, err := b.getStrategyClients()
 	if err != nil {
 		return false, err
@@ -90,6 +89,9 @@ func (b *Bucket) CheckBucket(bucketName string) (bool, error) {
 		exists, err = v.client.BucketExists(bucketName)
 		if err != nil {
 			return false, err
+		}
+		if !exists {
+			return false, nil
 		}
 	}
 

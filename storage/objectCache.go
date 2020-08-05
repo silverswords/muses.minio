@@ -15,7 +15,7 @@ type objectCache struct {
 func newCache() *cache.Cache {
 	ring := redis.NewRing(&redis.RingOptions{
 		Addrs: map[string]string{
-			"server": ":6379",
+			"server": "192.168.0.102:6379",
 		},
 	})
 
