@@ -15,6 +15,7 @@ type Bucket struct {
 type OtherOptions struct {
 	location string
 	strategy string
+	cache    bool
 }
 
 type OtherOption func(*OtherOptions)
@@ -31,15 +32,23 @@ func WithLocation(location string) OtherOption {
 	}
 }
 
+func WithCache(cache bool) OtherOption {
+	return func(b *OtherOptions) {
+		b.cache = cache
+	}
+}
+
 func NewBucket(bucketName, configName, configPath string, opts ...OtherOption) *Bucket {
 	const(
 		defaultStrategy = "multiWriteStrategy"
 		defaultLocation = "cn-north-1"
+		defaultCache = false
 	)
 
 	b := &OtherOptions{
 		defaultLocation,
 		defaultStrategy,
+		defaultCache,
 	}
 
 	for _, opt := range opts {
@@ -53,12 +62,13 @@ func NewBucket(bucketName, configName, configPath string, opts ...OtherOption) *
 			ctx,
 		},
 		configInfo: configInfo{
-			configName: configName,
-			configPath: configPath,
+			configName,
+			configPath,
 		},
 		OtherOptions: OtherOptions{
 			b.location,
 			b.strategy,
+			b.cache,
 		},
 	}
 }

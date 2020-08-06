@@ -7,9 +7,12 @@ import (
 
 func (b *Bucket) GetObject(objectName string) ([]byte, error) {
 	var minioObject *minio.Object
-	buf, err := b.getCacheObject(objectName)
-	if err == nil && buf != nil {
-		return buf, nil
+	var buf []byte
+	if b.cache {
+		buf, err := b.getCacheObject(objectName)
+		if err == nil && buf != nil {
+			return buf, nil
+		}
 	}
 
 	clients, err := b.getStrategyClients()

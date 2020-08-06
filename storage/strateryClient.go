@@ -42,10 +42,6 @@ func (b *Bucket) getStrategyClients() ([]*strategyClient, error) {
 		}
 
 		strategyClient := newStrategyClient(newMinioClient, weight)
-		if err != nil {
-			return nil, err
-		}
-
 		strategyClients = append(strategyClients, strategyClient)
 	}
 	return strategyClients, nil

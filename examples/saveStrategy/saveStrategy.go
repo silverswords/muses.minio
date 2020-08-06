@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/silverswords/muses.minio/storage"
 	"log"
 	"os"
-
-	"github.com/silverswords/muses.minio/storage"
 )
 
 func main() {

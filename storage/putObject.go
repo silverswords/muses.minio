@@ -19,7 +19,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 	}
 
 	var buf = make([]byte, objectStat.Size())
-	if exists {
+	if b.cache && exists {
 		err = b.setCacheObject(buf, objectName)
 		if err != nil {
 			log.Println("errors in set cache: ",err)
@@ -59,17 +59,6 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 			}
 		}
 	}
-
-	//if exists {
-	//	buf, err := b.GetObject(objectName)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	err = b.setCacheObject(buf, objectName)
-	//	if err != nil {
-	//		log.Println("errors in set cache: ",err)
-	//	}
-	//}
 
 	return nil
 }
