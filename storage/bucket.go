@@ -38,7 +38,7 @@ func WithCache(cache bool) OtherOption {
 	}
 }
 
-func NewBucket(bucketName, configName, configPath string, opts ...OtherOption) *Bucket {
+func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherOption) *Bucket {
 	const(
 		defaultStrategy = "multiWriteStrategy"
 		defaultLocation = "cn-north-1"
@@ -56,6 +56,7 @@ func NewBucket(bucketName, configName, configPath string, opts ...OtherOption) *
 	}
 
 	ctx := context.TODO()
+
 	return &Bucket{
 		bucketName: bucketName,
 		objectCache: objectCache{

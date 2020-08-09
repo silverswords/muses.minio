@@ -13,7 +13,7 @@ func main() {
 	}
 	defer object.Close()
 
-	b := storage.NewBucket("test", "config.yaml", "../")
+	b := storage.NewBucketConfig("test", "config.yaml", "../")
 	exists, err := b.CheckBucket("test")
 	if exists && err != nil {
 		log.Println("errors in CheckBucket", err)
