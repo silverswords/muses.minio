@@ -1,5 +1,10 @@
 package storage
 
+import (
+	"context"
+	"github.com/minio/minio-go/v7"
+)
+
 func (b *Bucket) RemoveObject(objectName string) error {
 	clients, err := b.getStrategyClients()
 	if err != nil {
@@ -7,7 +12,7 @@ func (b *Bucket) RemoveObject(objectName string) error {
 	}
 
 	for _, v := range clients {
-		err := v.client.RemoveObject(b.bucketName, objectName)
+		err := v.client.RemoveObject(context.Background(), b.bucketName, objectName, minio.RemoveObjectOptions{ true, ""})
 		if err != nil {
 			return err
 		}

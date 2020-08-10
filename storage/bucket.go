@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v7"
 )
 
 type Bucket struct {
@@ -13,48 +13,13 @@ type Bucket struct {
 }
 
 type OtherOptions struct {
-	location string
+	region string
 	strategy string
 	cache    bool
+	bucketEncryption bool
 }
 
-type OtherOption func(*OtherOptions)
-
-func WithStrategy(strategy string) OtherOption {
-	return func(b *OtherOptions) {
-		b.strategy = strategy
-	}
-}
-
-func WithLocation(location string) OtherOption {
-	return func(b *OtherOptions) {
-		b.location = location
-	}
-}
-
-func WithCache(cache bool) OtherOption {
-	return func(b *OtherOptions) {
-		b.cache = cache
-	}
-}
-
-func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherOption) *Bucket {
-	const(
-		defaultStrategy = "multiWriteStrategy"
-		defaultLocation = "cn-north-1"
-		defaultCache = false
-	)
-
-	b := &OtherOptions{
-		defaultLocation,
-		defaultStrategy,
-		defaultCache,
-	}
-
-	for _, opt := range opts {
-		opt(b)
-	}
-
+func NewBucketConfig(bucketName, configName, configPath string, opts OtherOptions) *Bucket {
 	ctx := context.TODO()
 
 	return &Bucket{
@@ -66,11 +31,7 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherOpt
 			configName,
 			configPath,
 		},
-		OtherOptions: OtherOptions{
-			b.location,
-			b.strategy,
-			b.cache,
-		},
+		OtherOptions: opts,
 	}
 }
 
@@ -81,7 +42,14 @@ func (b *Bucket) MakeBucket() error {
 	}
 
 	for _, v := range clients {
-		err := v.client.MakeBucket(b.bucketName, b.location)
+		err := v.client.MakeBucket(context.Background(), b.bucketName, minio.MakeBucketOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
+	if b.bucketEncryption {
+		err := b.setBucketEncryption()
 		if err != nil {
 			return err
 		}
@@ -89,7 +57,7 @@ func (b *Bucket) MakeBucket() error {
 	return nil
 }
 
-func (b *Bucket) CheckBucket(bucketName string) (bool, error) {
+func (b *Bucket) CheckBucket() (bool, error) {
 	var exists bool
 	clients, err := b.getStrategyClients()
 	if err != nil {
@@ -97,7 +65,7 @@ func (b *Bucket) CheckBucket(bucketName string) (bool, error) {
 	}
 
 	for _, v := range clients {
-		exists, err = v.client.BucketExists(bucketName)
+		exists, err = v.client.BucketExists(context.Background(), b.bucketName)
 		if err != nil {
 			return false, err
 		}
@@ -116,7 +84,7 @@ func (b *Bucket) ListedBucket() ([]minio.BucketInfo, error) {
 	}
 
 	minioClient := clients[0].client
-	buckets, err := minioClient.ListBuckets()
+	buckets, err := minioClient.ListBuckets(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -124,14 +92,14 @@ func (b *Bucket) ListedBucket() ([]minio.BucketInfo, error) {
 	return buckets, err
 }
 
-func (b *Bucket) RemoveBucket(bucketName string) error {
+func (b *Bucket) RemoveBucket() error {
 	clients, err := b.getStrategyClients()
 	if err != nil {
 		return err
 	}
 
 	for _, v := range clients {
-		err := v.client.RemoveBucket(bucketName)
+		err := v.client.RemoveBucket(context.Background(), b.bucketName)
 		if err != nil {
 			return err
 		}

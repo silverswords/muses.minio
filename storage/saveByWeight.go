@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v7"
 )
 
 func (b *Bucket) saveByWeight() (*minio.Client, error) {

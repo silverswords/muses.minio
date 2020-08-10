@@ -1,7 +1,8 @@
 package storage
 
 import (
-	"github.com/minio/minio-go/v6"
+	"context"
+	"github.com/minio/minio-go/v7"
 	"io"
 )
 
@@ -21,8 +22,8 @@ func (b *Bucket) GetObject(objectName string) ([]byte, error) {
 	}
 
 	if buf == nil {
-		for i := 0; i < len(clients); i++ {
-			minioObject, err = clients[i].client.GetObject(b.bucketName, objectName, minio.GetObjectOptions{})
+		for _, v := range clients {
+			minioObject, err = v.client.GetObject(context.Background(), b.bucketName, objectName, minio.GetObjectOptions{})
 			if err != nil {
 				return nil, err
 			}

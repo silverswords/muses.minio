@@ -3,7 +3,8 @@ package storage
 import (
 	"strconv"
 
-	"github.com/minio/minio-go/v6"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type strategyClient struct {
@@ -31,7 +32,14 @@ func (b *Bucket) getStrategyClients() ([]*strategyClient, error) {
 			return nil, err
 		}
 
-		newMinioClient, err := minio.New(v["endpoint"], v["accessKeyID"], v["secretAccessKey"], secure)
+		endpoint := v["endpoint"]
+		accessKeyID := v["access_key_id"]
+		secretAccessKey := v["secret_access_key"]
+
+		newMinioClient, err := minio.New(endpoint, &minio.Options{
+			Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+			Secure: secure,
+		})
 		if err != nil {
 			return nil, err
 		}

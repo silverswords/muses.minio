@@ -12,7 +12,7 @@ func main() {
 		log.Println("errors in MakeBucket", err)
 	}
 
-	exists, err := b.CheckBucket("test")
+	exists, err := b.CheckBucket()
 	if exists && err != nil {
 		log.Println("errors in CheckBucket", err)
 	}
