@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	b := storage.NewBucketConfig("test", "config.yaml", "../")
+	b := storage.NewBucketConfig("test", "config.yaml", "../", storage.OtherOptions{})
 	err := b.MakeBucket()
 	if err != nil {
 		log.Println("errors in MakeBucket", err)

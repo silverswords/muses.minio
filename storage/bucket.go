@@ -13,9 +13,9 @@ type Bucket struct {
 }
 
 type OtherOptions struct {
-	region string
-	strategy string
-	cache    bool
+	region           string
+	Strategy         string
+	cache            bool
 	bucketEncryption bool
 }
 
