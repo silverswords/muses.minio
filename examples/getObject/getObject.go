@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	b := storage.NewBucketConfig("test", "config.yaml", "../", storage.OtherOptions{})
+	b := storage.NewBucketConfig("test", "config.yaml", "../", storage.OtherBucketConfigOptions{})
 
 	exists, err := b.CheckBucket()
 	if exists && err != nil {
@@ -23,7 +23,7 @@ func main() {
 		log.Println("Bucket does not exist.")
 	}
 
-	minioObject, err := b.GetObject("cat")
+	minioObject, err := b.GetObject("cat", storage.ObjectEncryptions{})
 	if err != nil {
 		log.Println("errors in GetObject", err)
 	}

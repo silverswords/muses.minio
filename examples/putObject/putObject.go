@@ -13,7 +13,7 @@ func main() {
 	}
 	defer object.Close()
 
-	b := storage.NewBucketConfig("test", "config.yaml", "../", storage.OtherOptions{})
+	b := storage.NewBucketConfig("test", "config.yaml", "../", storage.OtherBucketConfigOptions{})
 	exists, err := b.CheckBucket()
 	if exists && err != nil {
 		log.Println("errors in CheckBucket", err)
@@ -25,7 +25,7 @@ func main() {
 		}
 	}
 
-	err = b.PutObject("cat", object)
+	err = b.PutObject("cat", object, storage.ObjectEncryptions{})
 	if err != nil {
 		log.Println("errors in PutObject", err)
 	}

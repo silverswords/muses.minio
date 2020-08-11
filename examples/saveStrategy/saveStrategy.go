@@ -14,7 +14,7 @@ func main() {
 	defer object.Close()
 
 	// savebyweight
-	byWeight := storage.NewBucketConfig("apple","config.yaml", "../", storage.OtherOptions{Strategy: "weightStrategy"})
+	byWeight := storage.NewBucketConfig("apple","config.yaml", "../", storage.OtherBucketConfigOptions{Strategy: "weightStrategy"})
 
 	exists, err := byWeight.CheckBucket()
 	if exists && err != nil {
@@ -27,13 +27,13 @@ func main() {
 		}
 	}
 
-	err = byWeight.PutObject("cat", object)
+	err = byWeight.PutObject("cat", object, storage.ObjectEncryptions{})
 	if err != nil {
 		log.Println("errors in PutObject", err)
 	}
 
 	// multiwrite
-	multiwrite := storage.NewBucketConfig("banana", "config.yaml", "../", storage.OtherOptions{})
+	multiwrite := storage.NewBucketConfig("banana", "config.yaml", "../", storage.OtherBucketConfigOptions{})
 	exists, err = multiwrite.CheckBucket()
 	if exists && err != nil {
 		log.Println("errors in CheckBucket", err)
@@ -45,7 +45,7 @@ func main() {
 		}
 	}
 
-	err = multiwrite.PutObject("cat", object)
+	err = multiwrite.PutObject("cat", object, storage.ObjectEncryptions{})
 	if err != nil {
 		log.Println("errors in PutObject", err)
 	}

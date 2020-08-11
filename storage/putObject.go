@@ -6,9 +6,20 @@ import (
 	"context"
 
 	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/encrypt"
 )
 
-func (b *Bucket) PutObject(objectName string, object *os.File) error {
+type ObjectEncryptions struct {
+	encryption bool
+	password string
+}
+
+func (b *Bucket) PutObject(objectName string, object *os.File, opts ObjectEncryptions) error {
+	var e encrypt.ServerSide
+	if opts.encryption && opts.password != "" {
+		e = encrypt.DefaultPBKDF([]byte(opts.password), []byte(b.bucketName + objectName))
+	}
+
 	objectStat, err := object.Stat()
 	if err != nil {
 		return err
@@ -27,14 +38,14 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 		}
 	}
 
-	if b.Strategy == "weightStrategy" {
+	if b.strategy == "weightStrategy" {
 		c, err := b.saveByWeight()
 		if err != nil {
 			return err
 		}
 
 		if exists {
-			_, err = c.PutObject(context.Background(), b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+			_, err = c.PutObject(context.Background(), b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream", ServerSideEncryption: e})
 			if err != nil {
 				return err
 			}
@@ -43,7 +54,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 		}
 	}
 
-	if b.Strategy == "" || b.Strategy == "multiWriteStrategy" {
+	if b.strategy == "" || b.strategy == "multiWriteStrategy" {
 		clients, err := b.getStrategyClients()
 		if err != nil {
 			return err
@@ -51,7 +62,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File) error {
 
 		for _, v := range clients {
 			if exists {
-				_, err = v.client.PutObject(context.Background(), b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+				_, err = v.client.PutObject(context.Background(), b.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream", ServerSideEncryption: e})
 				if err != nil {
 					return err
 				}

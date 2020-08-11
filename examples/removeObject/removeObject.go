@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	b := storage.NewBucketConfig("test", "config.yaml", "../", storage.OtherOptions{})
+	b := storage.NewBucketConfig("test", "config.yaml", "../", storage.OtherBucketConfigOptions{})
 	exists, err := b.CheckBucket()
 	if exists && err != nil {
 		log.Println("errors in CheckBucket", err)

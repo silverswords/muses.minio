@@ -3,12 +3,18 @@ package storage
 import (
 	"context"
 	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"io"
 )
 
-func (b *Bucket) GetObject(objectName string) ([]byte, error) {
+func (b *Bucket) GetObject(objectName string, opts ObjectEncryptions) ([]byte, error) {
 	var minioObject *minio.Object
 	var buf []byte
+	var e encrypt.ServerSide
+	if opts.encryption && opts.password != "" {
+		e = encrypt.DefaultPBKDF([]byte(opts.password), []byte(b.bucketName + objectName))
+	}
+
 	if b.cache {
 		buf, err := b.getCacheObject(objectName)
 		if err == nil && buf != nil {
@@ -23,7 +29,7 @@ func (b *Bucket) GetObject(objectName string) ([]byte, error) {
 
 	if buf == nil {
 		for _, v := range clients {
-			minioObject, err = v.client.GetObject(context.Background(), b.bucketName, objectName, minio.GetObjectOptions{})
+			minioObject, err = v.client.GetObject(context.Background(), b.bucketName, objectName, minio.GetObjectOptions{ServerSideEncryption: e})
 			if err != nil {
 				return nil, err
 			}

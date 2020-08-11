@@ -8,7 +8,7 @@ type config struct {
 	Clients []map[string]string
 }
 
-type configInfo struct {
+type clientConfigInfo struct {
 	configName string
 	configPath string
 }

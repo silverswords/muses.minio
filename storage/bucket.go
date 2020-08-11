@@ -8,18 +8,18 @@ import (
 type Bucket struct {
 	bucketName string
 	objectCache
-	configInfo
-	OtherOptions
+	clientConfigInfo
+	OtherBucketConfigOptions
 }
 
-type OtherOptions struct {
+type OtherBucketConfigOptions struct {
 	region           string
 	Strategy         string
 	cache            bool
 	bucketEncryption bool
 }
 
-func NewBucketConfig(bucketName, configName, configPath string, opts OtherOptions) *Bucket {
+func NewBucketConfig(bucketName, configName, configPath string, opts OtherBucketConfigOptions) *Bucket {
 	ctx := context.TODO()
 
 	return &Bucket{
@@ -27,11 +27,11 @@ func NewBucketConfig(bucketName, configName, configPath string, opts OtherOption
 		objectCache: objectCache{
 			ctx,
 		},
-		configInfo: configInfo{
+		clientConfigInfo: clientConfigInfo{
 			configName,
 			configPath,
 		},
-		OtherOptions: opts,
+		OtherBucketConfigOptions: opts,
 	}
 }
 
