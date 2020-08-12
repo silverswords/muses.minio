@@ -1,9 +1,9 @@
 package storage
 
 import (
+	"context"
 	"log"
 	"os"
-	"context"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
@@ -38,7 +38,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File, opts ObjectEncryp
 		}
 	}
 
-	if b.strategy == "weightStrategy" {
+	if b.Strategy == "weightStrategy" {
 		c, err := b.saveByWeight()
 		if err != nil {
 			return err
@@ -54,7 +54,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File, opts ObjectEncryp
 		}
 	}
 
-	if b.strategy == "" || b.strategy == "multiWriteStrategy" {
+	if b.Strategy == "" || b.Strategy == "multiWriteStrategy" {
 		clients, err := b.getStrategyClients()
 		if err != nil {
 			return err

@@ -5,6 +5,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/sse"
 )
 
+// Set encryption on a bucket
 func (b *Bucket) setBucketEncryption() error {
 	clients, err := b.getStrategyClients()
 	if err != nil {

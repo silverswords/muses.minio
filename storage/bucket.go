@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/lifecycle"
 )
 
 type Bucket struct {
@@ -17,6 +18,7 @@ type OtherBucketConfigOptions struct {
 	Strategy         string
 	cache            bool
 	bucketEncryption bool
+	expirationDays   lifecycle.ExpirationDays
 }
 
 func NewBucketConfig(bucketName, configName, configPath string, opts OtherBucketConfigOptions) *Bucket {
@@ -54,6 +56,12 @@ func (b *Bucket) MakeBucket() error {
 			return err
 		}
 	}
+
+	err = b.setBucketLifecycle(b.expirationDays)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
