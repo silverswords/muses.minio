@@ -9,12 +9,12 @@ import (
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 )
 
-type ObjectEncryptions struct {
+type ObjectServerSideEncryptions struct {
 	encryption bool
 	password string
 }
 
-func (b *Bucket) PutObject(objectName string, object *os.File, opts ObjectEncryptions) error {
+func (b *Bucket) PutObject(objectName string, object *os.File, opts ObjectServerSideEncryptions) error {
 	var e encrypt.ServerSide
 	if opts.encryption && opts.password != "" {
 		e = encrypt.DefaultPBKDF([]byte(opts.password), []byte(b.bucketName + objectName))

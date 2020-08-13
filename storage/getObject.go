@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func (b *Bucket) GetObject(objectName string, opts ObjectEncryptions) ([]byte, error) {
+func (b *Bucket) GetObject(objectName string, opts ObjectServerSideEncryptions) ([]byte, error) {
 	var minioObject *minio.Object
 	var buf []byte
 	var e encrypt.ServerSide

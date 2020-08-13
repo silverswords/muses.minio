@@ -25,7 +25,7 @@ func main() {
 		}
 	}
 
-	err = b.PutObject("cat", object, storage.ObjectEncryptions{})
+	err = b.PutObject("cat", object, storage.ObjectServerSideEncryptions{})
 	if err != nil {
 		log.Println("errors in PutObject", err)
 	}

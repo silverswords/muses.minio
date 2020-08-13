@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	err = byWeight.PutObject("cat", object, storage.ObjectEncryptions{})
+	err = byWeight.PutObject("cat", object, storage.ObjectServerSideEncryptions{})
 	if err != nil {
 		log.Println("errors in PutObject", err)
 	}
@@ -45,7 +45,7 @@ func main() {
 		}
 	}
 
-	err = multiwrite.PutObject("cat", object, storage.ObjectEncryptions{})
+	err = multiwrite.PutObject("cat", object, storage.ObjectServerSideEncryptions{})
 	if err != nil {
 		log.Println("errors in PutObject", err)
 	}

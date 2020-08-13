@@ -19,7 +19,7 @@ func main() {
 		log.Println("bucket does not exist.")
 	}
 
-	minioObject, err := b.GetObject("cat", storage.ObjectEncryptions{})
+	minioObject, err := b.GetObject("cat", storage.ObjectServerSideEncryptions{})
 	if err != nil {
 		log.Println("errors in GetObject", err)
 	}
