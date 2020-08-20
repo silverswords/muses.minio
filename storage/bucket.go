@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"github.com/minio/minio-go/v7"
+	"os"
 )
 
 type Bucket struct {
