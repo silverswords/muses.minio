@@ -4,15 +4,22 @@ import "os"
 
 type Bucket struct {
 	client  client
-	cache   cache
-	bucketName string
+	cache   cacher
+	clientConfigInfo
+	minioClient
+	cacheObject
 }
 
-func (b *Bucket) PutObject(objectName string, object *os.File) error {
+type bucketObject struct {
+	objectName string
+	object *os.File
+}
+
+func (b *bucketObject) PutObject() error {
 	return nil
 }
 
-func (b *Bucket) GetObject(objectName string) ([]byte, error) {
+func (b *bucketObject) GetObject() ([]byte, error) {
 	var buf []byte
 	return buf, nil
 }
