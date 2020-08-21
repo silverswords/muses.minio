@@ -10,16 +10,21 @@ type Bucket struct {
 	cacheObject
 }
 
-type bucketObject struct {
-	objectName string
-	object *os.File
-}
+func (b *Bucket) PutObject(objectName string, object *os.File) error {
+	err := b.client.PutObject(objectName, object)
+	if err != nil {
+		return err
+	}
 
-func (b *bucketObject) PutObject() error {
 	return nil
 }
 
-func (b *bucketObject) GetObject() ([]byte, error) {
+func (b *Bucket) GetObject(objectName string) ([]byte, error) {
 	var buf []byte
+	buf, err := b.client.GetObject(objectName)
+	if err != nil {
+		return nil, err
+	}
+
 	return buf, nil
 }

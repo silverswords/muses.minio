@@ -9,8 +9,8 @@ import (
 
 
 type cacher interface {
-	PutObject() error
-	GetObject() ([]byte, error)
+	PutObject(objectName string, minioObject []byte) error
+	GetObject(objectName string) ([]byte, error)
 	InitCache(CacheConfig) error
 }
 

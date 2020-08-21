@@ -11,8 +11,8 @@ import (
 )
 
 type client interface {
-	PutObject() error
-	GetObject() ([]byte, error)
+	PutObject(objectName string, object *os.File) error
+	GetObject(objectName string) ([]byte, error)
 	InitClient(ClientConfig) error
 }
 
