@@ -2,15 +2,15 @@ package bucket
 
 import (
 	"context"
-	"github.com/go-redis/redis/v8"
 	"github.com/go-redis/cache/v8"
+	"github.com/go-redis/redis/v8"
 	"time"
 )
-
 
 type cacher interface {
 	PutObject(objectName string, minioObject []byte) error
 	GetObject(objectName string) ([]byte, error)
+	RemoveObject() error
 	InitCache(CacheConfig) error
 }
 
@@ -58,4 +58,13 @@ func (co *cacheObject) GetObject(objectName string) ([]byte, error) {
 		return nil, err
 	}
 	return buf, nil
+}
+
+func (co *cacheObject) RemoveObject(objectName string) error {
+	err := co.cache.Delete(co.ctx, objectName)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

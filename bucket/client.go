@@ -11,9 +11,17 @@ import (
 )
 
 type client interface {
-	PutObject(objectName string, object *os.File) error
-	GetObject(objectName string) ([]byte, error)
+	PutObject(bucketName string, objectName string, object *os.File) error
+	GetObject(bucketName string, objectName string) ([]byte, error)
+	RemoveObject(bucketName string, objectName string) error
 	InitClient(ClientConfig) error
+}
+
+type bucketOperator interface {
+	MakeBucket(bucketName string) error
+	CheckBucket(bucketName string) (bool, error)
+	ListBuckets() ([]minio.BucketInfo, error)
+	RemoveBucket(bucketName string) error
 }
 
 type ClientConfig struct {
@@ -22,7 +30,6 @@ type ClientConfig struct {
 
 type minioClient struct {
 	mc *minio.Client
-	bucketName string
 }
 
 func (m *minioClient) InitClient(cc *ClientConfig) error {
@@ -47,21 +54,57 @@ func (m *minioClient) InitClient(cc *ClientConfig) error {
 	return nil
 }
 
-func (m *minioClient) PutObject(objectName string, object *os.File) error {
+func (m *minioClient) MakeBucket(bucketName string) error {
+	err := m.mc.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *minioClient) CheckBucket(bucketName string) (bool, error) {
+	exists, err := m.mc.BucketExists(context.Background(), bucketName)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+func (m *minioClient) ListBuckets() ([]minio.BucketInfo, error) {
+	bucketInfos, err := m.mc.ListBuckets(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return bucketInfos, nil
+}
+
+func (m *minioClient) RemoveBucket(bucketName string) error {
+	err := m.mc.RemoveBucket(context.Background(), bucketName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *minioClient) PutObject(bucketName string, objectName string, object *os.File) error {
 	objectStat, err := object.Stat()
 	if err != nil {
 		return err
 	}
 
-	_, err = m.mc.PutObject(context.Background(), m.bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{})
+	_, err = m.mc.PutObject(context.Background(), bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *minioClient) GetObject(objectName string) ([]byte, error) {
-	minioObject, err := m.mc.GetObject(context.Background(), m.bucketName, objectName, minio.GetObjectOptions{})
+func (m *minioClient) GetObject(bucketName string, objectName string) ([]byte, error) {
+	minioObject, err := m.mc.GetObject(context.Background(), bucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +117,15 @@ func (m *minioClient) GetObject(objectName string) ([]byte, error) {
 	}
 
 	return buf, nil
+}
+
+func (m *minioClient) RemoveObject(bucketName string, objectName string) error {
+	err := m.mc.RemoveObject(context.Background(), bucketName, objectName, minio.RemoveObjectOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type clientConfigInfo struct {
