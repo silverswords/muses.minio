@@ -9,7 +9,6 @@ import (
 type Bucket struct {
 	client  client
 	cache   cacher
-	bucketOperator bucketOperator
 	bucketName string
 	clientConfigInfo
 	minioClient
@@ -18,11 +17,16 @@ type Bucket struct {
 }
 
 type OtherBucketConfigOptions struct {
-	region           string
-	cache            bool
+	cache      bool
 }
 
-func NewBucketConfig(bucketName, configName, configPath string, opts OtherBucketConfigOptions) *Bucket {
+func NewBucketConfig(bucketName, configName, configPath string, opts OtherBucketConfigOptions) (*Bucket, error) {
+	var m minioClient
+	err := m.initClient()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Bucket{
 		bucketName: bucketName,
 		clientConfigInfo: clientConfigInfo{
@@ -33,14 +37,13 @@ func NewBucketConfig(bucketName, configName, configPath string, opts OtherBucket
 			ctx: context.Background(),
 		},
 		OtherBucketConfigOptions: OtherBucketConfigOptions{
-			opts.region,
 			opts.cache,
 		},
-	}
+	}, nil
 }
 
 func (b *Bucket) MakeBucket() error {
-	err := b.bucketOperator.MakeBucket(b.bucketName)
+	err := b.client.MakeBucket(b.bucketName)
 	if err != nil {
 		return err
 	}
@@ -49,7 +52,7 @@ func (b *Bucket) MakeBucket() error {
 }
 
 func (b *Bucket) CheckBucket() (bool, error) {
-	exists, err := b.bucketOperator.CheckBucket(b.bucketName)
+	exists, err := b.client.CheckBucket(b.bucketName)
 	if err != nil {
 		return false, err
 	}
@@ -58,7 +61,7 @@ func (b *Bucket) CheckBucket() (bool, error) {
 }
 
 func (b *Bucket) ListedBucket() ([]minio.BucketInfo, error) {
-	bucketInfos, err := b.bucketOperator.ListBuckets()
+	bucketInfos, err := b.client.ListBuckets()
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +70,7 @@ func (b *Bucket) ListedBucket() ([]minio.BucketInfo, error) {
 }
 
 func (b *Bucket) RemoveBucket() error {
-	err := b.bucketOperator.RemoveBucket(b.bucketName)
+	err := b.client.RemoveBucket(b.bucketName)
 	if err != nil {
 		return err
 	}

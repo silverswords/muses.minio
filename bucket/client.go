@@ -14,10 +14,7 @@ type client interface {
 	PutObject(bucketName string, objectName string, object *os.File) error
 	GetObject(bucketName string, objectName string) ([]byte, error)
 	RemoveObject(bucketName string, objectName string) error
-	InitClient(ClientConfig) error
-}
-
-type bucketOperator interface {
+	initClient() error
 	MakeBucket(bucketName string) error
 	CheckBucket(bucketName string) (bool, error)
 	ListBuckets() ([]minio.BucketInfo, error)
@@ -32,7 +29,9 @@ type minioClient struct {
 	mc *minio.Client
 }
 
-func (m *minioClient) InitClient(cc *ClientConfig) error {
+func (m *minioClient) initClient() error {
+	var bc Bucket
+	cc, err := bc.getConfig()
 	secure := cc.Client["secure"]
 	endpoint := cc.Client["endpoint"]
 	accessKeyID := cc.Client["access_key_id"]

@@ -11,7 +11,7 @@ type cacher interface {
 	PutObject(objectName string, minioObject []byte) error
 	GetObject(objectName string) ([]byte, error)
 	RemoveObject() error
-	InitCache(CacheConfig) error
+	initCache(CacheConfig) error
 }
 
 type CacheConfig struct {
@@ -23,7 +23,7 @@ type cacheObject struct {
 	cache *cache.Cache
 }
 
-func (co *cacheObject) InitCache(cc *CacheConfig) error {
+func (co *cacheObject) initCache(cc *CacheConfig) error {
 	ring := redis.NewRing(&redis.RingOptions{
 		Addrs: map[string]string{
 			"server": "192.168.0.102:6379",
