@@ -67,7 +67,7 @@ func (b *Bucket) MakeBucket(opts ...OtherMakeBucketOption) error {
 		opt(o)
 	}
 
-	err := b.client.MakeBucket(b.bucketName, minio.MakeBucketOptions{o.Region, o.ObjectLocking})
+	err := b.client.MakeBucket(b.bucketName, o)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File, opts ...OtherPutO
 		opt(o)
 	}
 
-	err = b.client.PutObject(b.bucketName, objectName, object, minio.PutObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
+	err = b.client.PutObject(b.bucketName, objectName, object, o)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (b *Bucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]b
 		opt(o)
 	}
 
-	buf, err := b.client.GetObject(b.bucketName, objectName, minio.GetObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
+	buf, err := b.client.GetObject(b.bucketName, objectName, o)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption
 		opt(o)
 	}
 
-	err := b.client.RemoveObject(b.bucketName, objectName, minio.RemoveObjectOptions{GovernanceBypass: o.GovernanceBypass})
+	err := b.client.RemoveObject(b.bucketName, objectName, o)
 	if err != nil {
 		return err
 	}

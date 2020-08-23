@@ -11,11 +11,11 @@ import (
 )
 
 type client interface {
-	PutObject(bucketName string, objectName string, object *os.File, opts minio.PutObjectOptions) error
-	GetObject(bucketName string, objectName string, opts minio.GetObjectOptions) ([]byte, error)
-	RemoveObject(bucketName string, objectName string, opts minio.RemoveObjectOptions) error
+	PutObject(bucketName string, objectName string, object *os.File, o *OtherPutObjectOptions) error
+	GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error)
+	RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error
 	initClient() error
-	MakeBucket(bucketName string, opts minio.MakeBucketOptions) error
+	MakeBucket(bucketName string, o *OtherMakeBucketOptions) error
 	CheckBucket(bucketName string) (bool, error)
 	ListBuckets() ([]minio.BucketInfo, error)
 	RemoveBucket(bucketName string) error
@@ -53,8 +53,8 @@ func (m *minioClient) initClient() error {
 	return nil
 }
 
-func (m *minioClient) MakeBucket(bucketName string, opts minio.MakeBucketOptions) error {
-	err := m.mc.MakeBucket(context.Background(), bucketName, opts)
+func (m *minioClient) MakeBucket(bucketName string, o *OtherMakeBucketOptions) error {
+	err := m.mc.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{o.Region, o.ObjectLocking})
 	if err != nil {
 		return err
 	}
@@ -89,21 +89,21 @@ func (m *minioClient) RemoveBucket(bucketName string) error {
 	return nil
 }
 
-func (m *minioClient) PutObject(bucketName string, objectName string, object *os.File, opts minio.PutObjectOptions) error {
+func (m *minioClient) PutObject(bucketName string, objectName string, object *os.File, o *OtherPutObjectOptions) error {
 	objectStat, err := object.Stat()
 	if err != nil {
 		return err
 	}
 
-	_, err = m.mc.PutObject(context.Background(), bucketName, objectName, object, objectStat.Size(), opts)
+	_, err = m.mc.PutObject(context.Background(), bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *minioClient) GetObject(bucketName string, objectName string, opts minio.GetObjectOptions) ([]byte, error) {
-	minioObject, err := m.mc.GetObject(context.Background(), bucketName, objectName, opts)
+func (m *minioClient) GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error) {
+	minioObject, err := m.mc.GetObject(context.Background(), bucketName, objectName, minio.GetObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
 	if err != nil {
 		return nil, err
 	}
@@ -118,8 +118,8 @@ func (m *minioClient) GetObject(bucketName string, objectName string, opts minio
 	return buf, nil
 }
 
-func (m *minioClient) RemoveObject(bucketName string, objectName string, opts minio.RemoveObjectOptions) error {
-	err := m.mc.RemoveObject(context.Background(), bucketName, objectName, opts)
+func (m *minioClient) RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error {
+	err := m.mc.RemoveObject(context.Background(), bucketName, objectName, minio.RemoveObjectOptions{GovernanceBypass: o.GovernanceBypass})
 	if err != nil {
 		return err
 	}
