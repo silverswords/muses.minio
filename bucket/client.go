@@ -11,10 +11,10 @@ import (
 )
 
 type client interface {
+	initClient() error
 	PutObject(bucketName string, objectName string, object *os.File, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error
-	initClient() error
 	MakeBucket(bucketName string, o *OtherMakeBucketOptions) error
 	CheckBucket(bucketName string) (bool, error)
 	ListBuckets() ([]minio.BucketInfo, error)
