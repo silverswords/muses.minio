@@ -195,3 +195,21 @@ func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption
 
 	return nil
 }
+
+func (b *Bucket) ListObjects(bucketName string, opts ...OtherListObjectsOption) <-chan minio.ObjectInfo {
+	const (
+		defaultPrefix = ""
+	)
+
+	o := &OtherListObjectsOptions{
+		prefix: defaultPrefix,
+	}
+
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	objectInfo := b.client.ListObjects(bucketName, o)
+
+	return objectInfo
+}

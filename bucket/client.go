@@ -15,6 +15,7 @@ type client interface {
 	PutObject(bucketName string, objectName string, object *os.File, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error
+	ListObjects(bucketName string, o *OtherListObjectsOptions) <-chan minio.ObjectInfo
 	MakeBucket(bucketName string, o *OtherMakeBucketOptions) error
 	CheckBucket(bucketName string) (bool, error)
 	ListBuckets() ([]minio.BucketInfo, error)
@@ -125,6 +126,12 @@ func (m *minioClient) RemoveObject(bucketName string, objectName string, o *Othe
 	}
 
 	return nil
+}
+
+func (m *minioClient) ListObjects(bucketName string, o *OtherListObjectsOptions) <-chan minio.ObjectInfo {
+	objectInfo := m.mc.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{Prefix: o.prefix})
+
+	return objectInfo
 }
 
 type clientConfigInfo struct {

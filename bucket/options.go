@@ -68,3 +68,15 @@ func WithGovernaceBypass(GovernaceBypass bool) OtherRemoveObjectOption {
 		o.GovernanceBypass = GovernaceBypass
 	}
 }
+
+type OtherListObjectsOptions struct {
+	prefix string
+}
+
+type OtherListObjectsOption func(o *OtherListObjectsOptions)
+
+func WithPrefix(prefix string) OtherListObjectsOption {
+	return func(o *OtherListObjectsOptions) {
+		o.prefix = prefix
+	}
+}
