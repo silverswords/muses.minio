@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
+	"github.com/minio/minio-go/v7/pkg/replication"
 	"io"
 	"os"
 )
@@ -35,6 +36,11 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherBuc
 
 	for _, opt := range opts {
 		opt(b)
+	}
+
+	var bc Bucket
+	if b.useCache {
+		bc.initCache()
 	}
 
 	return &Bucket{
@@ -102,6 +108,33 @@ func (b *Bucket) RemoveBucket() error {
 	return nil
 }
 
+func (b *Bucket) SetBucketReplication(cfg replication.Config) error {
+	err := b.client.setBucketReplication(b.bucketName, cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Bucket) GetBucketReplication() (replication.Config, error) {
+	cfg, err := b.client.getBucketReplication(b.bucketName)
+	if err != nil {
+		return cfg, err
+	}
+
+	return cfg, nil
+}
+
+func (b *Bucket) RemoveBucketReplication() error {
+	err := b.client.removeBucketReplication(b.bucketName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (b *Bucket) PutObject(objectName string, object *os.File, opts ...OtherPutObjectOption) error {
 	stat, err := object.Stat()
 	buf := make([]byte, stat.Size())
@@ -111,7 +144,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File, opts ...OtherPutO
 	}
 
 	if b.useCache {
-		err = b.cacher.PutObject(objectName, buf)
+		err = b.cacher.putObject(objectName, buf)
 		if err != nil {
 			return err
 		}
@@ -141,7 +174,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File, opts ...OtherPutO
 func (b *Bucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error) {
 	var buf []byte
 	if b.useCache {
-		buf, err := b.cacher.GetObject(objectName)
+		buf, err := b.cacher.getObject(objectName)
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +220,7 @@ func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption
 	}
 
 	if b.useCache {
-		err = b.cacher.RemoveObject(objectName)
+		err = b.cacher.removeObject(objectName)
 		if err != nil {
 			return err
 		}

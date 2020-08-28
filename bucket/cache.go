@@ -2,15 +2,16 @@ package bucket
 
 import (
 	"context"
+	"errors"
 	"github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
 	"time"
 )
 
 type cacher interface {
-	PutObject(objectName string, minioObject []byte) error
-	GetObject(objectName string) ([]byte, error)
-	RemoveObject(objectName string) error
+	putObject(objectName string, minioObject []byte) error
+	getObject(objectName string) ([]byte, error)
+	removeObject(objectName string) error
 	initCache(CacheConfig) error
 }
 
@@ -23,10 +24,21 @@ type cacheObject struct {
 	cache *cache.Cache
 }
 
-func (co *cacheObject) initCache(cc *CacheConfig) error {
+func (co *cacheObject) initCache() error {
+	var b Bucket
+	ac, err := b.getConfig()
+	if err != nil {
+		return err
+	}
+
+	endpoint := ac.config["cacheServerEndpoint"]
+	if endpoint == "" {
+		return errors.New("new cache failed")
+	}
+
 	ring := redis.NewRing(&redis.RingOptions{
 		Addrs: map[string]string{
-			"server": "192.168.0.102:6379",
+			"server": endpoint.(string),
 		},
 	})
 
@@ -38,7 +50,7 @@ func (co *cacheObject) initCache(cc *CacheConfig) error {
 	return nil
 }
 
-func (co *cacheObject) PutObject(objectName string, minioObject []byte) error {
+func (co *cacheObject) putObject(objectName string, minioObject []byte) error {
 	err := co.cache.Set(&cache.Item{
 		Ctx:   co.ctx,
 		Key:   objectName,
@@ -51,7 +63,7 @@ func (co *cacheObject) PutObject(objectName string, minioObject []byte) error {
 	return nil
 }
 
-func (co *cacheObject) GetObject(objectName string) ([]byte, error) {
+func (co *cacheObject) getObject(objectName string) ([]byte, error) {
 	var buf []byte
 	err := co.cache.Get(co.ctx, objectName, &buf)
 	if err != nil {
@@ -60,7 +72,7 @@ func (co *cacheObject) GetObject(objectName string) ([]byte, error) {
 	return buf, nil
 }
 
-func (co *cacheObject) RemoveObject(objectName string) error {
+func (co *cacheObject) removeObject(objectName string) error {
 	err := co.cache.Delete(co.ctx, objectName)
 	if err != nil {
 		return err

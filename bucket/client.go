@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/minio/minio-go/v7/pkg/replication"
 	"github.com/spf13/viper"
 	"io"
 	"os"
@@ -20,10 +21,13 @@ type client interface {
 	CheckBucket(bucketName string) (bool, error)
 	ListBuckets() ([]minio.BucketInfo, error)
 	RemoveBucket(bucketName string) error
+	setBucketReplication(bucketName string, cfg replication.Config) error
+	getBucketReplication(bucketName string) (replication.Config, error)
+	removeBucketReplication(bucketName string) error
 }
 
-type ClientConfig struct {
-	Client map[string]interface{}
+type allConfig struct {
+	config map[string]interface{}
 }
 
 type minioClient struct {
@@ -32,11 +36,15 @@ type minioClient struct {
 
 func (m *minioClient) initClient() error {
 	var b Bucket
-	cc, err := b.getConfig()
-	secure := cc.Client["secure"]
-	endpoint := cc.Client["endpoint"]
-	accessKeyID := cc.Client["access_key_id"]
-	secretAccessKey := cc.Client["secret_access_key"]
+	ac, err := b.getConfig()
+	if err != nil {
+		return err
+	}
+
+	secure := ac.config["secure"]
+	endpoint := ac.config["endpoint"]
+	accessKeyID := ac.config["access_key_id"]
+	secretAccessKey := ac.config["secret_access_key"]
 
 	if endpoint == "" && accessKeyID == "" && secretAccessKey == "" {
 		return errors.New("new client failed")
@@ -83,6 +91,33 @@ func (m *minioClient) ListBuckets() ([]minio.BucketInfo, error) {
 
 func (m *minioClient) RemoveBucket(bucketName string) error {
 	err := m.mc.RemoveBucket(context.Background(), bucketName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *minioClient) setBucketReplication(bucketName string, cfg replication.Config) error {
+	err := m.mc.SetBucketReplication(context.Background(), bucketName, cfg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *minioClient) getBucketReplication(bucketName string) (replication.Config, error) {
+	cfg, err := m.mc.GetBucketReplication(context.Background(), bucketName)
+	if err != nil {
+		return cfg, err
+	}
+
+	return cfg, nil
+}
+
+func (m *minioClient) removeBucketReplication(bucketName string) error {
+	err := m.mc.RemoveBucketReplication(context.Background(), bucketName)
 	if err != nil {
 		return err
 	}
@@ -139,8 +174,8 @@ type clientConfigInfo struct {
 	configPath string
 }
 
-func (b *Bucket) getConfig() (*ClientConfig, error) {
-	var config ClientConfig
+func (b *Bucket) getConfig() (*allConfig, error) {
+	var config allConfig
 	viper.SetConfigName(b.configName)
 	viper.AddConfigPath(b.configPath)
 	viper.SetConfigType("yaml")
