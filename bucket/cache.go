@@ -8,11 +8,11 @@ import (
 	"time"
 )
 
-type cacher interface {
-	putObject(objectName string, minioObject []byte) error
-	getObject(objectName string) ([]byte, error)
-	removeObject(objectName string) error
-	initCache(CacheConfig) error
+type Cacher interface {
+	PutObject(objectName string, minioObject []byte) error
+	GetObject(objectName string) ([]byte, error)
+	RemoveObject(objectName string) error
+	InitCache(CacheConfig) error
 }
 
 type CacheConfig struct {
@@ -24,9 +24,9 @@ type cacheObject struct {
 	cache *cache.Cache
 }
 
-func (co *cacheObject) initCache() error {
+func (co *cacheObject) InitCache() error {
 	var b Bucket
-	ac, err := b.getConfig()
+	ac, err := b.GetConfig()
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (co *cacheObject) initCache() error {
 	return nil
 }
 
-func (co *cacheObject) putObject(objectName string, minioObject []byte) error {
+func (co *cacheObject) PutObject(objectName string, minioObject []byte) error {
 	err := co.cache.Set(&cache.Item{
 		Ctx:   co.ctx,
 		Key:   objectName,
@@ -63,7 +63,7 @@ func (co *cacheObject) putObject(objectName string, minioObject []byte) error {
 	return nil
 }
 
-func (co *cacheObject) getObject(objectName string) ([]byte, error) {
+func (co *cacheObject) GetObject(objectName string) ([]byte, error) {
 	var buf []byte
 	err := co.cache.Get(co.ctx, objectName, &buf)
 	if err != nil {
@@ -72,7 +72,7 @@ func (co *cacheObject) getObject(objectName string) ([]byte, error) {
 	return buf, nil
 }
 
-func (co *cacheObject) removeObject(objectName string) error {
+func (co *cacheObject) RemoveObject(objectName string) error {
 	err := co.cache.Delete(co.ctx, objectName)
 	if err != nil {
 		return err

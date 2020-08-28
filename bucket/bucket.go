@@ -10,8 +10,8 @@ import (
 )
 
 type Bucket struct {
-	client  client
-	cacher   cacher
+	client  Client
+	cacher   Cacher
 	bucketName string
 	clientConfigInfo
 	minioClient
@@ -25,7 +25,7 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherBuc
 	)
 
 	var m minioClient
-	err := m.initClient()
+	err := m.InitClient()
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherBuc
 
 	var bc Bucket
 	if b.useCache {
-		bc.initCache()
+		bc.InitCache()
 	}
 
 	return &Bucket{
@@ -109,7 +109,7 @@ func (b *Bucket) RemoveBucket() error {
 }
 
 func (b *Bucket) SetBucketReplication(cfg replication.Config) error {
-	err := b.client.setBucketReplication(b.bucketName, cfg)
+	err := b.client.SetBucketReplication(b.bucketName, cfg)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (b *Bucket) SetBucketReplication(cfg replication.Config) error {
 }
 
 func (b *Bucket) GetBucketReplication() (replication.Config, error) {
-	cfg, err := b.client.getBucketReplication(b.bucketName)
+	cfg, err := b.client.GetBucketReplication(b.bucketName)
 	if err != nil {
 		return cfg, err
 	}
@@ -127,7 +127,7 @@ func (b *Bucket) GetBucketReplication() (replication.Config, error) {
 }
 
 func (b *Bucket) RemoveBucketReplication() error {
-	err := b.client.removeBucketReplication(b.bucketName)
+	err := b.client.RemoveBucketReplication(b.bucketName)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File, opts ...OtherPutO
 	}
 
 	if b.useCache {
-		err = b.cacher.putObject(objectName, buf)
+		err = b.cacher.PutObject(objectName, buf)
 		if err != nil {
 			return err
 		}
@@ -174,7 +174,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File, opts ...OtherPutO
 func (b *Bucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error) {
 	var buf []byte
 	if b.useCache {
-		buf, err := b.cacher.getObject(objectName)
+		buf, err := b.cacher.GetObject(objectName)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +220,7 @@ func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption
 	}
 
 	if b.useCache {
-		err = b.cacher.removeObject(objectName)
+		err = b.cacher.RemoveObject(objectName)
 		if err != nil {
 			return err
 		}

@@ -11,8 +11,8 @@ import (
 	"os"
 )
 
-type client interface {
-	initClient() error
+type Client interface {
+	InitClient() error
 	PutObject(bucketName string, objectName string, object *os.File, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error
@@ -21,9 +21,9 @@ type client interface {
 	CheckBucket(bucketName string) (bool, error)
 	ListBuckets() ([]minio.BucketInfo, error)
 	RemoveBucket(bucketName string) error
-	setBucketReplication(bucketName string, cfg replication.Config) error
-	getBucketReplication(bucketName string) (replication.Config, error)
-	removeBucketReplication(bucketName string) error
+	SetBucketReplication(bucketName string, cfg replication.Config) error
+	GetBucketReplication(bucketName string) (replication.Config, error)
+	RemoveBucketReplication(bucketName string) error
 }
 
 type allConfig struct {
@@ -34,9 +34,9 @@ type minioClient struct {
 	mc *minio.Client
 }
 
-func (m *minioClient) initClient() error {
+func (m *minioClient) InitClient() error {
 	var b Bucket
-	ac, err := b.getConfig()
+	ac, err := b.GetConfig()
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (m *minioClient) RemoveBucket(bucketName string) error {
 	return nil
 }
 
-func (m *minioClient) setBucketReplication(bucketName string, cfg replication.Config) error {
+func (m *minioClient) SetBucketReplication(bucketName string, cfg replication.Config) error {
 	err := m.mc.SetBucketReplication(context.Background(), bucketName, cfg)
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func (m *minioClient) setBucketReplication(bucketName string, cfg replication.Co
 	return nil
 }
 
-func (m *minioClient) getBucketReplication(bucketName string) (replication.Config, error) {
+func (m *minioClient) GetBucketReplication(bucketName string) (replication.Config, error) {
 	cfg, err := m.mc.GetBucketReplication(context.Background(), bucketName)
 	if err != nil {
 		return cfg, err
@@ -116,7 +116,7 @@ func (m *minioClient) getBucketReplication(bucketName string) (replication.Confi
 	return cfg, nil
 }
 
-func (m *minioClient) removeBucketReplication(bucketName string) error {
+func (m *minioClient) RemoveBucketReplication(bucketName string) error {
 	err := m.mc.RemoveBucketReplication(context.Background(), bucketName)
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ type clientConfigInfo struct {
 	configPath string
 }
 
-func (b *Bucket) getConfig() (*allConfig, error) {
+func (b *Bucket) GetConfig() (*allConfig, error) {
 	var config allConfig
 	viper.SetConfigName(b.configName)
 	viper.AddConfigPath(b.configPath)
