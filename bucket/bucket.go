@@ -135,6 +135,42 @@ func (b *Bucket) RemoveBucketReplication() error {
 	return nil
 }
 
+func (b *Bucket) SetBucketPolicy(policy string) error {
+	err := b.client.SetBucketPolicy(b.bucketName, policy)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Bucket) GetBucketPolicy() (string, error) {
+	policy, err := b.client.GetBucketPolicy(b.bucketName)
+	if err != nil {
+		return "", err
+	}
+
+	return policy, nil
+}
+
+func (b *Bucket) SetObjectLockConfig(mode *minio.RetentionMode, validity *uint, uint *minio.ValidityUnit) error {
+	err := b.client.SetObjectLockConfig(b.bucketName, mode, validity, uint)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Bucket) GetObjectLockConfig() (string, *minio.RetentionMode, *uint, *minio.ValidityUnit, error) {
+	objectLock, mode, validity, uint, err := b.client.GetObjectLockConfig(b.bucketName)
+	if err != nil {
+		return "", nil, nil, nil, err
+	}
+
+	return objectLock, mode, validity, uint, nil
+}
+
 func (b *Bucket) PutObject(objectName string, object *os.File, opts ...OtherPutObjectOption) error {
 	stat, err := object.Stat()
 	buf := make([]byte, stat.Size())

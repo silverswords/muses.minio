@@ -17,6 +17,8 @@ type Client interface {
 	GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error
 	ListObjects(bucketName string, o *OtherListObjectsOptions) <-chan minio.ObjectInfo
+	SetObjectLockConfig(bucketName string, mode *minio.RetentionMode, validity *uint, uint *minio.ValidityUnit) error
+	GetObjectLockConfig(bucketName string) (string, *minio.RetentionMode, *uint, *minio.ValidityUnit, error)
 	MakeBucket(bucketName string, o *OtherMakeBucketOptions) error
 	CheckBucket(bucketName string) (bool, error)
 	ListBuckets() ([]minio.BucketInfo, error)
@@ -24,6 +26,8 @@ type Client interface {
 	SetBucketReplication(bucketName string, cfg replication.Config) error
 	GetBucketReplication(bucketName string) (replication.Config, error)
 	RemoveBucketReplication(bucketName string) error
+	SetBucketPolicy(bucketName, policy string) error
+	GetBucketPolicy(bucketName string) (string, error)
 }
 
 type allConfig struct {
@@ -123,6 +127,42 @@ func (m *minioClient) RemoveBucketReplication(bucketName string) error {
 	}
 
 	return nil
+}
+
+func (m *minioClient) SetBucketPolicy(bucketName, policy string) error {
+	err := m.mc.SetBucketPolicy(context.Background(), bucketName, policy)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *minioClient) GetBucketPolicy(bucketName string) (string, error) {
+	policy, err := m.mc.GetBucketPolicy(context.Background(), bucketName)
+	if err != nil {
+		return "", err
+	}
+
+	return policy, nil
+}
+
+func (m *minioClient) SetObjectLockConfig(bucketName string, mode *minio.RetentionMode, validity *uint, uint *minio.ValidityUnit) error {
+	err := m.mc.SetObjectLockConfig(context.Background(), bucketName, mode, validity, uint)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *minioClient) GetObjectLockConfig(bucketName string) (string, *minio.RetentionMode, *uint, *minio.ValidityUnit, error) {
+	objectLock, mode, validity, uint, err := m.mc.GetObjectLockConfig(context.Background(), bucketName)
+	if err != nil {
+		return "", nil, nil, nil, err
+	}
+
+	return objectLock, mode, validity, uint, nil
 }
 
 func (m *minioClient) PutObject(bucketName string, objectName string, object *os.File, o *OtherPutObjectOptions) error {
