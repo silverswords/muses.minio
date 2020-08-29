@@ -1,13 +1,8 @@
-clients:
+client:
   - minioClientName: client1
-    endpoint: 192.168.0.103:9001
-    accessKeyID: minio
-    secretAccessKey: minio123
-    secure: false
-    weight: 0.3
-  - minioClientName: client2
-    endpoint: 192.168.0.102:9001
-    accessKeyID: minio
-    secretAccessKey: minio123
-    secure: false
-    weight: 0.7
+    endpoint: 192.168.0.253:31311
+    accessKeyID: AKIAIOSFODNN7EXAMPLE
+    secretAccessKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    secure: true
+cache:
+  - cacheServerEndpoint: 192.168.0.114:6379

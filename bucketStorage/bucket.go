@@ -1,4 +1,4 @@
-package bucket
+package bucketStorage
 
 import (
 	"context"
@@ -13,7 +13,7 @@ type Bucket struct {
 	client  Client
 	cacher   Cacher
 	bucketName string
-	clientConfigInfo
+	ConfigInfo
 	minioClient
 	cacheObject
 	OtherBucketConfigOptions
@@ -24,28 +24,32 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherBuc
 		defaultUseCache = false
 	)
 
-	var m minioClient
-	err := m.InitClient()
+	b := &OtherBucketConfigOptions{
+		defaultUseCache,
+	}
+
+	var mc minioClient
+	err := mc.InitClient(configName, configPath)
 	if err != nil {
 		return nil, err
 	}
 
-	b := &OtherBucketConfigOptions{
-		defaultUseCache,
+	var co cacheObject
+	if b.useCache {
+		err = co.InitCache(configName, configPath)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 
 	for _, opt := range opts {
 		opt(b)
 	}
 
-	var bc Bucket
-	if b.useCache {
-		bc.InitCache()
-	}
-
 	return &Bucket{
 		bucketName: bucketName,
-		clientConfigInfo: clientConfigInfo{
+		ConfigInfo: ConfigInfo{
 			configName,
 			configPath,
 		},

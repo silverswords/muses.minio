@@ -1,4 +1,4 @@
-package bucket
+package bucketStorage
 
 import "github.com/minio/minio-go/v7/pkg/encrypt"
 

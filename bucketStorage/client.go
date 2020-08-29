@@ -1,4 +1,4 @@
-package bucket
+package bucketStorage
 
 import (
 	"context"
@@ -8,11 +8,12 @@ import (
 	"github.com/minio/minio-go/v7/pkg/replication"
 	"github.com/spf13/viper"
 	"io"
+	"log"
 	"os"
 )
 
 type Client interface {
-	InitClient() error
+	InitClient(configName, configPath string) error
 	PutObject(bucketName string, objectName string, object *os.File, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error
@@ -30,25 +31,21 @@ type Client interface {
 	GetBucketPolicy(bucketName string) (string, error)
 }
 
-type allConfig struct {
-	config map[string]interface{}
-}
-
 type minioClient struct {
 	mc *minio.Client
 }
 
-func (m *minioClient) InitClient() error {
-	var b Bucket
-	ac, err := b.GetConfig()
+func (m *minioClient) InitClient(configName, configPath string) error {
+	ac, err := GetConfig(configName, configPath)
 	if err != nil {
 		return err
 	}
 
-	secure := ac.config["secure"]
-	endpoint := ac.config["endpoint"]
-	accessKeyID := ac.config["access_key_id"]
-	secretAccessKey := ac.config["secret_access_key"]
+	log.Println("--------- ac.config ---------", ac.Client)
+	secure := ac.Client["secure"]
+	endpoint := ac.Client["endpoint"]
+	accessKeyID := ac.Client["accessKeyID"]
+	secretAccessKey := ac.Client["secretAccessKey"]
 
 	if endpoint == "" && accessKeyID == "" && secretAccessKey == "" {
 		return errors.New("new client failed")
@@ -209,17 +206,24 @@ func (m *minioClient) ListObjects(bucketName string, o *OtherListObjectsOptions)
 	return objectInfo
 }
 
-type clientConfigInfo struct {
+type Config struct {
+	Client map[string]interface{}
+	Cache map[string]interface{}
+}
+
+type ConfigInfo struct {
 	configName string
 	configPath string
 }
 
-func (b *Bucket) GetConfig() (*allConfig, error) {
-	var config allConfig
-	viper.SetConfigName(b.configName)
-	viper.AddConfigPath(b.configPath)
+func GetConfig(configName, configPath string) (*Config, error) {
+	var config Config
+	log.Println(configName, configPath, "xxxxx")
+	viper.SetConfigName(configName)
+	viper.AddConfigPath(configPath)
 	viper.SetConfigType("yaml")
 	err := viper.ReadInConfig()
+	log.Println("aaa")
 	if err != nil {
 		return nil, err
 	}

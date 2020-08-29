@@ -1,4 +1,4 @@
-package bucket
+package bucketStorage
 
 import (
 	"context"
@@ -12,11 +12,7 @@ type Cacher interface {
 	PutObject(objectName string, minioObject []byte) error
 	GetObject(objectName string) ([]byte, error)
 	RemoveObject(objectName string) error
-	InitCache(CacheConfig) error
-}
-
-type CacheConfig struct {
-	Config map[string]interface{}
+	InitCache(configName, configPath string) error
 }
 
 type cacheObject struct {
@@ -24,14 +20,13 @@ type cacheObject struct {
 	cache *cache.Cache
 }
 
-func (co *cacheObject) InitCache() error {
-	var b Bucket
-	ac, err := b.GetConfig()
+func (co *cacheObject) InitCache(configName, configPath string) error {
+	ac, err := GetConfig(configName, configPath)
 	if err != nil {
 		return err
 	}
 
-	endpoint := ac.config["cacheServerEndpoint"]
+	endpoint := ac.Cache["cacheServerEndpoint"]
 	if endpoint == "" {
 		return errors.New("new cache failed")
 	}
