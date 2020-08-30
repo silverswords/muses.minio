@@ -12,7 +12,7 @@ type Cacher interface {
 	PutObject(objectName string, minioObject []byte) error
 	GetObject(objectName string) ([]byte, error)
 	RemoveObject(objectName string) error
-	InitCache(configName, configPath string) error
+	//InitCache(configName, configPath string) error
 }
 
 type cacheObject struct {
@@ -20,15 +20,30 @@ type cacheObject struct {
 	cache *cache.Cache
 }
 
-func (co *cacheObject) InitCache(configName, configPath string) error {
+func initCache(configName, configPath string) (Cacher, error) {
 	ac, err := GetConfig(configName, configPath)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	cacheType := ac.Cache["cacheType"]
+
+	c, err := newRedisCache(configName, configPath)
+	if cacheType.(string) == "redis" {
+		return c, nil
+	}
+
+	return nil, nil
+}
+
+func newRedisCache(configName, configPath string) (Cacher, error) {
+	ac, err := GetConfig(configName, configPath)
+	if err != nil {
+		return nil, err
 	}
 
 	endpoint := ac.Cache["cacheServerEndpoint"]
 	if endpoint == "" {
-		return errors.New("new cache failed")
+		return nil, errors.New("new cache failed")
 	}
 
 	ring := redis.NewRing(&redis.RingOptions{
@@ -41,8 +56,9 @@ func (co *cacheObject) InitCache(configName, configPath string) error {
 		Redis: ring,
 	})
 
-	co.cache = c
-	return nil
+	return &cacheObject{
+		cache: c,
+	}, nil
 }
 
 func (co *cacheObject) PutObject(objectName string, minioObject []byte) error {

@@ -1,8 +1,11 @@
 client:
-  - minioClientName: client1
+  - clientName: client1
     endpoint: 192.168.0.253:31311
     accessKeyID: AKIAIOSFODNN7EXAMPLE
     secretAccessKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     secure: true
+    clientType: minio
 cache:
-  - cacheServerEndpoint: 192.168.0.114:6379
+  - cacheName: cache1
+    cacheType: redis
+    cacheServerEndpoint: 192.168.0.114:6379

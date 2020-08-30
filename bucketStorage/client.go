@@ -2,6 +2,7 @@ package bucketStorage
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -9,12 +10,10 @@ import (
 	"github.com/spf13/viper"
 	"io"
 	"log"
-	"os"
 )
 
 type Client interface {
-	InitClient(configName, configPath string) error
-	PutObject(bucketName string, objectName string, object *os.File, o *OtherPutObjectOptions) error
+	PutObject(bucketName string, objectName string, reader io.Reader, objectSize int64, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error
 	ListObjects(bucketName string, o *OtherListObjectsOptions) <-chan minio.ObjectInfo
@@ -35,10 +34,27 @@ type minioClient struct {
 	mc *minio.Client
 }
 
-func (m *minioClient) InitClient(configName, configPath string) error {
+func initClient(configName, configPath string) (Client, error) {
 	ac, err := GetConfig(configName, configPath)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	clientType := ac.Client["clientType"]
+
+	if clientType.(string) == "minio" {
+		c, err := newMinioClient(configName, configPath)
+		if err != nil {
+			return nil, err
+		}
+		return c, nil
+	}
+	return nil, nil
+}
+
+func newMinioClient(configName, configPath string) (Client, error) {
+	ac, err := GetConfig(configName, configPath)
+	if err != nil {
+		return nil, err
 	}
 
 	log.Println("--------- ac.config ---------", ac.Client)
@@ -48,19 +64,23 @@ func (m *minioClient) InitClient(configName, configPath string) error {
 	secretAccessKey := ac.Client["secretAccessKey"]
 
 	if endpoint == "" && accessKeyID == "" && secretAccessKey == "" {
-		return errors.New("new client failed")
+		return nil, errors.New("new client failed")
 	}
-
+	t, err := minio.DefaultTransport(secure.(bool))
+	t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	mc, err := minio.New(endpoint.(string), &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKeyID.(string), secretAccessKey.(string), ""),
 		Secure: secure.(bool),
+		Transport: t,
+
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	m.mc = mc
-	return nil
+	return &minioClient{
+		mc,
+	}, nil
 }
 
 func (m *minioClient) MakeBucket(bucketName string, o *OtherMakeBucketOptions) error {
@@ -162,13 +182,8 @@ func (m *minioClient) GetObjectLockConfig(bucketName string) (string, *minio.Ret
 	return objectLock, mode, validity, uint, nil
 }
 
-func (m *minioClient) PutObject(bucketName string, objectName string, object *os.File, o *OtherPutObjectOptions) error {
-	objectStat, err := object.Stat()
-	if err != nil {
-		return err
-	}
-
-	_, err = m.mc.PutObject(context.Background(), bucketName, objectName, object, objectStat.Size(), minio.PutObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
+func (m *minioClient) PutObject(bucketName string, objectName string, reader io.Reader, objectSize int64, o *OtherPutObjectOptions) error {
+	_, err := m.mc.PutObject(context.Background(), bucketName, objectName, reader, objectSize, minio.PutObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
 	if err != nil {
 		return err
 	}
@@ -183,7 +198,8 @@ func (m *minioClient) GetObject(bucketName string, objectName string, o *OtherGe
 
 	stat, err := minioObject.Stat()
 	buf := make([]byte, stat.Size)
-	_, err = io.ReadFull(minioObject, buf)
+	n, err := io.ReadFull(minioObject, buf)
+	log.Println(n,stat.Size,minioObject)
 	if err != nil {
 		return nil, err
 	}

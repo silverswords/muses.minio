@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	bucket, err := bucketStorage.NewBucketConfig("test", "config.yaml", "./examples")
+	bucket, err := bucketStorage.NewBucketConfig("test", "config.yaml", "../")
 	if err != nil {
 		log.Println("errors in NewBucketConfig", err)
 	}
@@ -24,19 +24,24 @@ func main() {
 		log.Println("errors in CheckBucket", err)
 	}
 
-	object, err := os.Open("../cat.jpg")
+	file, err := os.Open("../cat.jpg")
 	if err != nil {
 		log.Println("errors in Open", err)
 	}
-	defer object.Close()
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		log.Println(err)
+	}
 
 	if ok {
-		err = bucket.PutObject("cat", object)
+		err = bucket.PutObject("cat", file, stat.Size())
 		if err != nil {
 			log.Println("errors in PutObject", err)
 		}
 
-		minioObject, err := bucket.GetObject("moon")
+		minioObject, err := bucket.GetObject("cat")
 		if err != nil {
 			log.Println("errors in GetObject", err)
 		}

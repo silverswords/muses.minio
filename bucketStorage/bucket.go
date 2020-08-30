@@ -1,12 +1,12 @@
 package bucketStorage
 
 import (
+	"bytes"
 	"context"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/minio/minio-go/v7/pkg/replication"
 	"io"
-	"os"
 )
 
 type Bucket struct {
@@ -28,15 +28,14 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherBuc
 		defaultUseCache,
 	}
 
-	var mc minioClient
-	err := mc.InitClient(configName, configPath)
+	c, err := initClient(configName, configPath)
 	if err != nil {
 		return nil, err
 	}
 
-	var co cacheObject
+	var ca Cacher
 	if b.useCache {
-		err = co.InitCache(configName, configPath)
+		ca, err = initCache(configName, configPath)
 		if err != nil {
 			return nil, err
 		}
@@ -48,6 +47,8 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherBuc
 	}
 
 	return &Bucket{
+		client: c,
+		cacher: ca,
 		bucketName: bucketName,
 		ConfigInfo: ConfigInfo{
 			configName,
@@ -175,16 +176,19 @@ func (b *Bucket) GetObjectLockConfig() (string, *minio.RetentionMode, *uint, *mi
 	return objectLock, mode, validity, uint, nil
 }
 
-func (b *Bucket) PutObject(objectName string, object *os.File, opts ...OtherPutObjectOption) error {
-	stat, err := object.Stat()
-	buf := make([]byte, stat.Size())
-	_, err = io.ReadFull(object, buf)
+func (b *Bucket) PutObject(objectName string, reader io.Reader, objectSize int64, opts ...OtherPutObjectOption) error {
+	var buf bytes.Buffer
+	cacheBytes := make([]byte, objectSize)
+	bs := bytes.NewBuffer(cacheBytes)
+
+	teeReader := io.TeeReader(reader, &buf)
+	_, err := teeReader.Read(cacheBytes)
 	if err != nil {
 		return err
 	}
 
 	if b.useCache {
-		err = b.cacher.PutObject(objectName, buf)
+		err = b.cacher.PutObject(objectName, cacheBytes)
 		if err != nil {
 			return err
 		}
@@ -203,7 +207,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File, opts ...OtherPutO
 		opt(o)
 	}
 
-	err = b.client.PutObject(b.bucketName, objectName, object, o)
+	err = b.client.PutObject(b.bucketName, objectName, &buf, objectSize,  o)
 	if err != nil {
 		return err
 	}

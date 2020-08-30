@@ -13,4 +13,5 @@ require (
 	github.com/minio/minio-go/v7 v7.0.4
 	github.com/morgances/ycmedia/backend v0.0.0-20200521055513-d1a2cfdefe7d // indirect
 	github.com/spf13/viper v1.7.0
+	golang.org/x/tools v0.0.0-20200519015757-0d0afa43d58a
 )
