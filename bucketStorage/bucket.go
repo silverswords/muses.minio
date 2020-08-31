@@ -179,7 +179,6 @@ func (b *Bucket) GetObjectLockConfig() (string, *minio.RetentionMode, *uint, *mi
 func (b *Bucket) PutObject(objectName string, reader io.Reader, objectSize int64, opts ...OtherPutObjectOption) error {
 	var buf bytes.Buffer
 	cacheBytes := make([]byte, objectSize)
-	bs := bytes.NewBuffer(cacheBytes)
 
 	teeReader := io.TeeReader(reader, &buf)
 	_, err := teeReader.Read(cacheBytes)
