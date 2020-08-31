@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
+	"log"
 	"time"
 )
 
@@ -12,11 +13,9 @@ type Cacher interface {
 	PutObject(objectName string, minioObject []byte) error
 	GetObject(objectName string) ([]byte, error)
 	RemoveObject(objectName string) error
-	//InitCache(configName, configPath string) error
 }
 
 type cacheObject struct {
-	ctx context.Context
 	cache *cache.Cache
 }
 
@@ -27,8 +26,12 @@ func initCache(configName, configPath string) (Cacher, error) {
 	}
 	cacheType := ac.Cache["cacheType"]
 
-	c, err := newRedisCache(configName, configPath)
 	if cacheType.(string) == "redis" {
+		c, err := newRedisCache(configName, configPath)
+		if err != nil {
+			return nil, err
+		}
+
 		return c, nil
 	}
 
@@ -62,8 +65,9 @@ func newRedisCache(configName, configPath string) (Cacher, error) {
 }
 
 func (co *cacheObject) PutObject(objectName string, minioObject []byte) error {
+	log.Println("minioObject", minioObject)
 	err := co.cache.Set(&cache.Item{
-		Ctx:   co.ctx,
+		Ctx:   context.Background(),
 		Key:   objectName,
 		Value: minioObject,
 		TTL:   time.Hour,
@@ -76,15 +80,16 @@ func (co *cacheObject) PutObject(objectName string, minioObject []byte) error {
 
 func (co *cacheObject) GetObject(objectName string) ([]byte, error) {
 	var buf []byte
-	err := co.cache.Get(co.ctx, objectName, &buf)
+	err := co.cache.Get(context.Background(), objectName, &buf)
 	if err != nil {
 		return nil, err
 	}
+
 	return buf, nil
 }
 
 func (co *cacheObject) RemoveObject(objectName string) error {
-	err := co.cache.Delete(co.ctx, objectName)
+	err := co.cache.Delete(context.Background(), objectName)
 	if err != nil {
 		return err
 	}

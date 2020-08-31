@@ -8,4 +8,4 @@ client:
 cache:
   - cacheName: cache1
     cacheType: redis
-    cacheServerEndpoint: 192.168.0.114:6379
+    cacheServerEndpoint: 192.168.0.102:6379

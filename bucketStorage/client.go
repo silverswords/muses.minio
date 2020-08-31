@@ -57,7 +57,7 @@ func newMinioClient(configName, configPath string) (Client, error) {
 		return nil, err
 	}
 
-	log.Println("--------- ac.config ---------", ac.Client)
+	log.Println("--------- ac.config ---------", ac)
 	secure := ac.Client["secure"]
 	endpoint := ac.Client["endpoint"]
 	accessKeyID := ac.Client["accessKeyID"]
@@ -198,8 +198,7 @@ func (m *minioClient) GetObject(bucketName string, objectName string, o *OtherGe
 
 	stat, err := minioObject.Stat()
 	buf := make([]byte, stat.Size)
-	n, err := io.ReadFull(minioObject, buf)
-	log.Println(n,stat.Size,minioObject)
+	_, err = io.ReadFull(minioObject, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -234,12 +233,10 @@ type ConfigInfo struct {
 
 func GetConfig(configName, configPath string) (*Config, error) {
 	var config Config
-	log.Println(configName, configPath, "xxxxx")
 	viper.SetConfigName(configName)
 	viper.AddConfigPath(configPath)
 	viper.SetConfigType("yaml")
 	err := viper.ReadInConfig()
-	log.Println("aaa")
 	if err != nil {
 		return nil, err
 	}

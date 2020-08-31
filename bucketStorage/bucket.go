@@ -2,7 +2,6 @@ package bucketStorage
 
 import (
 	"bytes"
-	"context"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/minio/minio-go/v7/pkg/replication"
@@ -28,6 +27,10 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherBuc
 		defaultUseCache,
 	}
 
+	for _, opt := range opts {
+		opt(b)
+	}
+
 	c, err := initClient(configName, configPath)
 	if err != nil {
 		return nil, err
@@ -41,11 +44,6 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherBuc
 		}
 	}
 
-
-	for _, opt := range opts {
-		opt(b)
-	}
-
 	return &Bucket{
 		client: c,
 		cacher: ca,
@@ -53,9 +51,6 @@ func NewBucketConfig(bucketName, configName, configPath string, opts ...OtherBuc
 		ConfigInfo: ConfigInfo{
 			configName,
 			configPath,
-		},
-		cacheObject: cacheObject{
-			ctx: context.Background(),
 		},
 		OtherBucketConfigOptions: OtherBucketConfigOptions{
 			b.useCache,
