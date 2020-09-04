@@ -108,6 +108,33 @@ func (b *Bucket) RemoveBucket() error {
 	return nil
 }
 
+func (b *Bucket) EnableBucketVersioning() error {
+	err := b.client.EnableBucketVersioning(b.bucketName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *Bucket) GetBucketVersioning() (minio.BucketVersioningConfiguration, error) {
+	configuration, err := b.client.GetBucketVersioning(b.bucketName)
+	if err != nil {
+		return configuration, err
+	}
+
+	return configuration, nil
+}
+
+func (b *Bucket) SuspendBucketVersioning() error {
+	err := b.client.SuspendBucketVersioning(b.bucketName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (b *Bucket) SetBucketReplication(cfg replication.Config) error {
 	err := b.client.SetBucketReplication(b.bucketName, cfg)
 	if err != nil {
