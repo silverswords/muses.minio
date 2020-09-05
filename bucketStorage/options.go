@@ -1,6 +1,9 @@
 package bucketStorage
 
-import "github.com/minio/minio-go/v7/pkg/encrypt"
+import (
+	"encoding/xml"
+	"github.com/minio/minio-go/v7/pkg/encrypt"
+)
 
 type OtherBucketConfigOptions struct {
 	useCache      bool
@@ -30,6 +33,32 @@ func WithRegion(region string) OtherMakeBucketOption {
 func WithObjectLocking(objectLocking bool) OtherMakeBucketOption {
 	return func(o *OtherMakeBucketOptions) {
 		o.ObjectLocking = objectLocking
+	}
+}
+
+type OtherSetBucketVersioningOptions struct {
+	XMLName   xml.Name
+	Status    string
+	MFADelete string
+}
+
+type OtherSetBucketVersioningOption func(o *OtherSetBucketVersioningOptions)
+
+func WithXMLName(xmlName xml.Name) OtherSetBucketVersioningOption {
+	return func(o *OtherSetBucketVersioningOptions) {
+		o.XMLName = xmlName
+	}
+}
+
+func WithStatus(status string) OtherSetBucketVersioningOption {
+	return func(o *OtherSetBucketVersioningOptions) {
+		o.Status = status
+	}
+}
+
+func WithMFADelete(mfaDelete string) OtherSetBucketVersioningOption {
+	return func(o *OtherSetBucketVersioningOptions) {
+		o.MFADelete = mfaDelete
 	}
 }
 

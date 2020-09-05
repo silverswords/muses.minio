@@ -23,9 +23,8 @@ type Client interface {
 	CheckBucket(bucketName string) (bool, error)
 	ListBuckets() ([]minio.BucketInfo, error)
 	RemoveBucket(bucketName string) error
-	EnableBucketVersioning(bucketName string) error
+	SetBucketVersioning(bucketName string, o *OtherSetBucketVersioningOptions) error
 	GetBucketVersioning(bucketName string) (minio.BucketVersioningConfiguration, error)
-	SuspendBucketVersioning(bucketName string) error
 	SetBucketReplication(bucketName string, cfg replication.Config) error
 	GetBucketReplication(bucketName string) (replication.Config, error)
 	RemoveBucketReplication(bucketName string) error
@@ -122,8 +121,8 @@ func (m *minioClient) RemoveBucket(bucketName string) error {
 	return nil
 }
 
-func (m *minioClient) EnableBucketVersioning(bucketName string) error {
-	err := m.mc.EnableVersioning(context.Background(), bucketName)
+func (m *minioClient) SetBucketVersioning(bucketName string, o *OtherSetBucketVersioningOptions) error {
+	err := m.mc.SetBucketVersioning(context.Background(), bucketName, minio.BucketVersioningConfiguration{XMLName: o.XMLName, Status: o.Status, MFADelete: o.MFADelete})
 	if err != nil {
 		return err
 	}
@@ -138,15 +137,6 @@ func (m *minioClient) GetBucketVersioning(bucketName string) (minio.BucketVersio
 	}
 
 	return bucketVersioningConfiguration, nil
-}
-
-func (m *minioClient) SuspendBucketVersioning(bucketName string) error {
-	err := m.mc.SuspendVersioning(context.Background(), bucketName)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (m *minioClient) SetBucketReplication(bucketName string, cfg replication.Config) error {

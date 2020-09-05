@@ -2,6 +2,7 @@ package bucketStorage
 
 import (
 	"bytes"
+	"crypto/md5"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/minio/minio-go/v7/pkg/replication"
@@ -108,8 +109,20 @@ func (b *Bucket) RemoveBucket() error {
 	return nil
 }
 
-func (b *Bucket) EnableBucketVersioning() error {
-	err := b.client.EnableBucketVersioning(b.bucketName)
+func (b *Bucket) SetBucketVersioning(opts ...OtherSetBucketVersioningOption) error {
+	const (
+		defaultStatus = "Enabled"
+	)
+
+	o := &OtherSetBucketVersioningOptions{
+		Status: defaultStatus,
+	}
+
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	err := b.client.SetBucketVersioning(b.bucketName, o)
 	if err != nil {
 		return err
 	}
@@ -124,15 +137,6 @@ func (b *Bucket) GetBucketVersioning() (minio.BucketVersioningConfiguration, err
 	}
 
 	return configuration, nil
-}
-
-func (b *Bucket) SuspendBucketVersioning() error {
-	err := b.client.SuspendBucketVersioning(b.bucketName)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (b *Bucket) SetBucketReplication(cfg replication.Config) error {
@@ -232,6 +236,19 @@ func (b *Bucket) PutObject(objectName string, reader io.Reader, objectSize int64
 	if err != nil {
 		return err
 	}
+
+	h := md5.New()
+	_, err = io.WriteString(h, objectName)
+	if err != nil {
+		return err
+	}
+
+	_, err = h.Write(cacheBytes)
+	if err != nil {
+		return nil
+	}
+
+	md5.Sum(nil)
 
 	return nil
 }

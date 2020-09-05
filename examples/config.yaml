@@ -1,9 +1,9 @@
 client:
   - clientName: client1
-    endpoint: 192.168.0.253:31311
-    accessKeyID: AKIAIOSFODNN7EXAMPLE
-    secretAccessKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-    secure: true
+    endpoint: 192.168.0.251:32000
+    accessKeyID: minio
+    secretAccessKey: minio123
+    secure: false
     clientType: minio
 cache:
   - cacheName: cache1
