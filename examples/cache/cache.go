@@ -9,17 +9,17 @@ import (
 )
 
 func main() {
-	bucket, err := bucketStorage.NewBucketConfig("moon", "config.yaml", "../", bucketStorage.WithUseCache(true))
+	cb, err := bucketStorage.NewBucketWithCacheConfig("moon", "config.yaml", "../")
 	if err != nil {
 		log.Println("errors in NewBucketConfig", err)
 	}
 
-	err = bucket.MakeBucket()
+	err = cb.MakeBucket()
 	if err != nil {
 		log.Println("errors in MakeBucket", err)
 	}
 
-	ok, err := bucket.CheckBucket()
+	ok, err := cb.CheckBucket()
 	if err != nil {
 		log.Println("errors in CheckBucket", err)
 	}
@@ -36,12 +36,12 @@ func main() {
 	}
 
 	if ok {
-		err = bucket.PutObject("bluemoon", file, stat.Size())
+		err = cb.PutObject("bluemoon", file, stat.Size())
 		if err != nil {
 			log.Println("errors in PutObject", err)
 		}
 
-		minioObject, err := bucket.GetObject("bluemoon")
+		minioObject, err := cb.GetObject("bluemoon")
 		if err != nil {
 			log.Println("errors in GetObject", err)
 		}

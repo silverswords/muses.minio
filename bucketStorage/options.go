@@ -4,18 +4,18 @@ import (
 	"encoding/xml"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 )
-
-type OtherBucketConfigOptions struct {
-	useCache      bool
-}
-
-type OtherBucketConfigOption func(*OtherBucketConfigOptions)
-
-func WithUseCache(useCache bool) OtherBucketConfigOption {
-	return func(o *OtherBucketConfigOptions) {
-		o.useCache = useCache
-	}
-}
+//
+//type OtherBucketConfigOptions struct {
+//	useCache      bool
+//}
+//
+//type OtherBucketConfigOption func(*OtherBucketConfigOptions)
+//
+//func WithUseCache(useCache bool) OtherBucketConfigOption {
+//	return func(o *OtherBucketConfigOptions) {
+//		o.useCache = useCache
+//	}
+//}
 
 type OtherMakeBucketOptions struct{
 	Region string
