@@ -9,3 +9,9 @@ cache:
   - cacheName: cache1
     cacheType: redis
     cacheServerEndpoint: 127.0.0.1:6379
+database:
+  - host: localhost
+    port: 5432
+    user: postgres
+    password: 123456
+    dbname: minio

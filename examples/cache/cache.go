@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	cb, err := bucketStorage.NewBucketWithCacheConfig("moon", "config.yaml", "../")
+	cb, err := bucketStorage.NewCacheBucket("moon", "config.yaml", "../")
 	if err != nil {
 		log.Println("errors in NewBucketConfig", err)
 	}

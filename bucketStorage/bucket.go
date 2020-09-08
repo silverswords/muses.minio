@@ -3,6 +3,7 @@ package bucketStorage
 import (
 	"bytes"
 	"crypto/md5"
+	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/minio/minio-go/v7/pkg/replication"
@@ -21,7 +22,7 @@ type Bucket struct {
 	minioClient
 }
 
-func NewBucketConfig(bucketName, configName, configPath string) (*Bucket, error) {
+func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
 	c, err := initClient(configName, configPath)
 	if err != nil {
 		return nil, err
@@ -37,7 +38,7 @@ func NewBucketConfig(bucketName, configName, configPath string) (*Bucket, error)
 	}, nil
 }
 
-func NewBucketWithCacheConfig(bucketName, configName, configPath string) (*CacheBucket, error) {
+func NewCacheBucket(bucketName, configName, configPath string) (*CacheBucket, error) {
 	c, err := initClient(configName, configPath)
 	if err != nil {
 		return nil, err
@@ -67,7 +68,7 @@ func (b *Bucket) MakeBucket(opts ...OtherMakeBucketOption) error {
 		defaultObjectLocking = false
 	)
 
-	o := &OtherMakeBucketOptions{
+	o := &MakeBucketOptions{
 		Region: defaultRegion,
 		ObjectLocking: defaultObjectLocking,
 	}
@@ -116,7 +117,7 @@ func (b *Bucket) SetBucketVersioning(opts ...OtherSetBucketVersioningOption) err
 		defaultStatus = "Enabled"
 	)
 
-	o := &OtherSetBucketVersioningOptions{
+	o := &SetBucketVersioningOptions{
 		Status: defaultStatus,
 	}
 
@@ -265,7 +266,8 @@ func (b *Bucket) PutObject(objectName string, reader io.Reader, objectSize int64
 		return err
 	}
 
-	md5.Sum(nil)
+	m := h.Sum(nil)
+	fmt.Printf("%x", m)
 
 	return nil
 }
@@ -291,7 +293,7 @@ func (cb *CacheBucket) GetObject(objectName string, opts ...OtherGetObjectOption
 func (b *Bucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error) {
 	var buf []byte
 	var e encrypt.ServerSide
-	o := &OtherGetObjectOptions{
+	o := &GetObjectOptions{
 		e,
 	}
 
@@ -326,7 +328,7 @@ func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption
 		defaultGovernanceBypass = false
 	)
 
-	o := &OtherRemoveObjectOptions{
+	o := &RemoveObjectOptions{
 		GovernanceBypass: defaultGovernanceBypass,
 	}
 
@@ -347,7 +349,7 @@ func (b *Bucket) ListObjects(bucketName string, opts ...OtherListObjectsOption) 
 		defaultPrefix = ""
 	)
 
-	o := &OtherListObjectsOptions{
+	o := &ListObjectsOptions{
 		prefix: defaultPrefix,
 	}
 

@@ -14,16 +14,16 @@ import (
 
 type Client interface {
 	PutObject(bucketName string, objectName string, reader io.Reader, objectSize int64, o *OtherPutObjectOptions) error
-	GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error)
-	RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error
-	ListObjects(bucketName string, o *OtherListObjectsOptions) <-chan minio.ObjectInfo
-	SetObjectLockConfig(bucketName string, mode *minio.RetentionMode, validity *uint, uint *minio.ValidityUnit) error
-	GetObjectLockConfig(bucketName string) (string, *minio.RetentionMode, *uint, *minio.ValidityUnit, error)
-	MakeBucket(bucketName string, o *OtherMakeBucketOptions) error
+	GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error)
+	RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error
+	ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo
+	SetObjectLockConfig(bucketName string, mode string, validity *uint, uint string) error
+	GetObjectLockConfig(bucketName string) (string, string, *uint, string, error)
+	MakeBucket(bucketName string, o *MakeBucketOptions) error
 	CheckBucket(bucketName string) (bool, error)
 	ListBuckets() ([]minio.BucketInfo, error)
 	RemoveBucket(bucketName string) error
-	SetBucketVersioning(bucketName string, o *OtherSetBucketVersioningOptions) error
+	SetBucketVersioning(bucketName string, o *SetBucketVersioningOptions) error
 	GetBucketVersioning(bucketName string) (minio.BucketVersioningConfiguration, error)
 	SetBucketReplication(bucketName string, cfg replication.Config) error
 	GetBucketReplication(bucketName string) (replication.Config, error)
@@ -85,7 +85,7 @@ func newMinioClient(configName, configPath string) (Client, error) {
 	}, nil
 }
 
-func (m *minioClient) MakeBucket(bucketName string, o *OtherMakeBucketOptions) error {
+func (m *minioClient) MakeBucket(bucketName string, o *MakeBucketOptions) error {
 	err := m.mc.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{o.Region, o.ObjectLocking})
 	if err != nil {
 		return err
@@ -121,7 +121,7 @@ func (m *minioClient) RemoveBucket(bucketName string) error {
 	return nil
 }
 
-func (m *minioClient) SetBucketVersioning(bucketName string, o *OtherSetBucketVersioningOptions) error {
+func (m *minioClient) SetBucketVersioning(bucketName string, o *SetBucketVersioningOptions) error {
 	err := m.mc.SetBucketVersioning(context.Background(), bucketName, minio.BucketVersioningConfiguration{XMLName: o.XMLName, Status: o.Status, MFADelete: o.MFADelete})
 	if err != nil {
 		return err
@@ -184,8 +184,10 @@ func (m *minioClient) GetBucketPolicy(bucketName string) (string, error) {
 	return policy, nil
 }
 
-func (m *minioClient) SetObjectLockConfig(bucketName string, mode *minio.RetentionMode, validity *uint, uint *minio.ValidityUnit) error {
-	err := m.mc.SetObjectLockConfig(context.Background(), bucketName, mode, validity, uint)
+func (m *minioClient) SetObjectLockConfig(bucketName string, mode string, validity *uint, uint string) error {
+	mr := (*minio.RetentionMode)(&mode)
+	u := (*minio.ValidityUnit)(&uint)
+	err := m.mc.SetObjectLockConfig(context.Background(), bucketName, mr, validity, u)
 	if err != nil {
 		return err
 	}
@@ -193,13 +195,14 @@ func (m *minioClient) SetObjectLockConfig(bucketName string, mode *minio.Retenti
 	return nil
 }
 
-func (m *minioClient) GetObjectLockConfig(bucketName string) (string, *minio.RetentionMode, *uint, *minio.ValidityUnit, error) {
+func (m *minioClient) GetObjectLockConfig(bucketName string) (string, string, *uint, string, error) {
 	objectLock, mode, validity, uint, err := m.mc.GetObjectLockConfig(context.Background(), bucketName)
 	if err != nil {
-		return "", nil, nil, nil, err
+		return "", "", nil, "", err
 	}
-
-	return objectLock, mode, validity, uint, nil
+	mr := string(*mode)
+	u := string(*uint)
+	return objectLock, mr, validity, u, nil
 }
 
 func (m *minioClient) PutObject(bucketName string, objectName string, reader io.Reader, objectSize int64, o *OtherPutObjectOptions) error {
@@ -210,7 +213,7 @@ func (m *minioClient) PutObject(bucketName string, objectName string, reader io.
 	return nil
 }
 
-func (m *minioClient) GetObject(bucketName string, objectName string, o *OtherGetObjectOptions) ([]byte, error) {
+func (m *minioClient) GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error) {
 	minioObject, err := m.mc.GetObject(context.Background(), bucketName, objectName, minio.GetObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
 	if err != nil {
 		return nil, err
@@ -226,7 +229,7 @@ func (m *minioClient) GetObject(bucketName string, objectName string, o *OtherGe
 	return buf, nil
 }
 
-func (m *minioClient) RemoveObject(bucketName string, objectName string, o *OtherRemoveObjectOptions) error {
+func (m *minioClient) RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error {
 	err := m.mc.RemoveObject(context.Background(), bucketName, objectName, minio.RemoveObjectOptions{GovernanceBypass: o.GovernanceBypass})
 	if err != nil {
 		return err
@@ -235,7 +238,7 @@ func (m *minioClient) RemoveObject(bucketName string, objectName string, o *Othe
 	return nil
 }
 
-func (m *minioClient) ListObjects(bucketName string, o *OtherListObjectsOptions) <-chan minio.ObjectInfo {
+func (m *minioClient) ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo {
 	objectInfo := m.mc.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{Prefix: o.prefix})
 
 	return objectInfo
@@ -244,6 +247,7 @@ func (m *minioClient) ListObjects(bucketName string, o *OtherListObjectsOptions)
 type Config struct {
 	Client map[string]interface{}
 	Cache map[string]interface{}
+	Database map[string]interface{}
 }
 
 type ConfigInfo struct {

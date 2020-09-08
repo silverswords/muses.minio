@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	bucket, err := bucketStorage.NewBucketConfig("test", "config.yaml", "../")
+	bucket, err := bucketStorage.NewBucket("test", "config.yaml", "../")
 	if err != nil {
 		log.Println("errors in NewBucketConfig", err)
 	}
