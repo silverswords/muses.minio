@@ -2,12 +2,15 @@ package bucketStorage
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/minio/minio-go/v7/pkg/replication"
 	"io"
+	"net/url"
+	"time"
 )
 
 type CacheBucket struct {
@@ -187,7 +190,7 @@ func (b *Bucket) GetBucketPolicy() (string, error) {
 	return policy, nil
 }
 
-func (b *Bucket) SetObjectLockConfig(mode *minio.RetentionMode, validity *uint, uint *minio.ValidityUnit) error {
+func (b *Bucket) SetObjectLockConfig(mode string, validity *uint, uint string) error {
 	err := b.client.SetObjectLockConfig(b.bucketName, mode, validity, uint)
 	if err != nil {
 		return err
@@ -196,10 +199,10 @@ func (b *Bucket) SetObjectLockConfig(mode *minio.RetentionMode, validity *uint, 
 	return nil
 }
 
-func (b *Bucket) GetObjectLockConfig() (string, *minio.RetentionMode, *uint, *minio.ValidityUnit, error) {
+func (b *Bucket) GetObjectLockConfig() (string, string, *uint, string, error) {
 	objectLock, mode, validity, uint, err := b.client.GetObjectLockConfig(b.bucketName)
 	if err != nil {
-		return "", nil, nil, nil, err
+		return "", "", nil, "", err
 	}
 
 	return objectLock, mode, validity, uint, nil
@@ -270,6 +273,24 @@ func (b *Bucket) PutObject(objectName string, reader io.Reader, objectSize int64
 	fmt.Printf("%x", m)
 
 	return nil
+}
+
+func (b *Bucket) PresignedPutObject(ctx context.Context, objectName string, expires time.Duration) (*url.URL, error) {
+ url, err := b.client.PresignedPutObject(b.bucketName, objectName, expires)
+ if err != nil {
+ 	return nil, err
+ }
+
+ return url, nil
+}
+
+func (b *Bucket) PresignedGetObject(ctx context.Context, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
+	url, err := b.client.PresignedGetObject(b.bucketName, objectName, expires, reqParams)
+	if err != nil {
+		return nil, err
+	}
+
+	return url, nil
 }
 
 func (cb *CacheBucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error) {

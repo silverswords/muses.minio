@@ -33,7 +33,7 @@ func main()  {
 		var replCfg replication.Config
 		err = xml.Unmarshal([]byte(replicationStr), &replCfg)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println("errors in Unmarshal", err)
 		}
 
 		// This replication ARN should have been generated for replication endpoint using `mc admin bucket remote` command

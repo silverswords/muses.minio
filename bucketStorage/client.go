@@ -10,12 +10,16 @@ import (
 	"github.com/spf13/viper"
 	"io"
 	"log"
+	"net/url"
+	"time"
 )
 
 type Client interface {
 	PutObject(bucketName string, objectName string, reader io.Reader, objectSize int64, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error
+	PresignedPutObject(bucketName string, objectName string, expires time.Duration) (*url.URL, error)
+	PresignedGetObject(bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
 	ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo
 	SetObjectLockConfig(bucketName string, mode string, validity *uint, uint string) error
 	GetObjectLockConfig(bucketName string) (string, string, *uint, string, error)
@@ -236,6 +240,24 @@ func (m *minioClient) RemoveObject(bucketName string, objectName string, o *Remo
 	}
 
 	return nil
+}
+
+func (m *minioClient) PresignedPutObject(bucketName string, objectName string, expires time.Duration) (*url.URL, error) {
+	url, err := m.mc.PresignedPutObject(context.Background(), bucketName, objectName, expires)
+	if err != nil {
+		return nil, err
+	}
+
+	return url, nil
+}
+
+func (m *minioClient) PresignedGetObject(bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
+	url, err := m.mc.PresignedGetObject(context.Background(), bucketName, objectName, expires, reqParams)
+	if err != nil {
+		return nil, err
+	}
+
+	return url, nil
 }
 
 func (m *minioClient) ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo {
