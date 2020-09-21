@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func main()  {
+func main() {
 	bucket, err := bucketStorage.NewBucket("test", "config.yaml", "../")
 	if err != nil {
 		log.Println("errors in NewBucketConfig", err)

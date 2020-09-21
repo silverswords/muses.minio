@@ -26,7 +26,7 @@ func main() {
 		}
 		fmt.Println("Adding to queue")
 		queue = append(queue, struct{}{})
-		go removeFromQueue(1*time.Second)
+		go removeFromQueue(1 * time.Second)
 		c.L.Unlock()
 	}
 }

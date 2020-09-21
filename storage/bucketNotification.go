@@ -32,7 +32,7 @@ func (b *Bucket) listenBucketNotification(ctx context.Context, prefix, suffix st
 		notificationInfo = v.client.ListenBucketNotification(ctx, b.bucketName, prefix, suffix, events)
 	}
 
-	return notificationInfo ,nil
+	return notificationInfo, nil
 }
 
 func (b *Bucket) getBucketNotification() (notification.Configuration, error) {

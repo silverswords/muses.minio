@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/minio/minio-go/v7/pkg/replication"
 	"context"
+	"github.com/minio/minio-go/v7/pkg/replication"
 )
 
 func (b *Bucket) setBucketReplication(ctx context.Context, cfg replication.Config) error {
@@ -53,6 +53,3 @@ func (b *Bucket) removeBucketReplication(ctx context.Context) error {
 
 	return nil
 }
-
-
-

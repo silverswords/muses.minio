@@ -1,8 +1,8 @@
 package main
 
 import (
-"fmt"
-"time"
+	"fmt"
+	"time"
 )
 
 func logs(args ...interface{}) {

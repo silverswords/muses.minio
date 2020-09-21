@@ -12,7 +12,7 @@ func (b *Bucket) GetObject(objectName string, opts ObjectServerSideEncryptions) 
 	var buf []byte
 	var e encrypt.ServerSide
 	if opts.encryption && opts.password != "" {
-		e = encrypt.DefaultPBKDF([]byte(opts.password), []byte(b.bucketName + objectName))
+		e = encrypt.DefaultPBKDF([]byte(opts.password), []byte(b.bucketName+objectName))
 	}
 
 	if b.cache {

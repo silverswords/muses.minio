@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/minio/minio-go/v7/pkg/lifecycle"
 	"context"
+	"github.com/minio/minio-go/v7/pkg/lifecycle"
 )
 
 // Set lifecycle on a bucket
@@ -32,7 +32,7 @@ func (b *Bucket) setBucketLifecycle(days lifecycle.ExpirationDays) error {
 	return nil
 }
 
-func (b *Bucket) getBucketLifecycle() (*lifecycle.Configuration ,error) {
+func (b *Bucket) getBucketLifecycle() (*lifecycle.Configuration, error) {
 	clients, err := b.getStrategyClients()
 	if err != nil {
 		return nil, err

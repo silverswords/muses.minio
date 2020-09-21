@@ -14,7 +14,7 @@ func main() {
 	defer object.Close()
 
 	// savebyweight
-	byWeight := storage.NewBucketConfig("apple","config.yaml", "../", storage.OtherBucketConfigOptions{Strategy: "weightStrategy"})
+	byWeight := storage.NewBucketConfig("apple", "config.yaml", "../", storage.OtherBucketConfigOptions{Strategy: "weightStrategy"})
 
 	exists, err := byWeight.CheckBucket()
 	if exists && err != nil {

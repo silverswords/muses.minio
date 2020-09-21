@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 )
+
 //
 //type OtherBucketConfigOptions struct {
 //	useCache      bool
@@ -17,8 +18,8 @@ import (
 //	}
 //}
 
-type MakeBucketOptions struct{
-	Region string
+type MakeBucketOptions struct {
+	Region        string
 	ObjectLocking bool
 }
 
@@ -63,7 +64,7 @@ func WithMFADelete(mfaDelete string) OtherSetBucketVersioningOption {
 }
 
 type OtherPutObjectOptions struct {
-	ServerSideEncryption    encrypt.ServerSide
+	ServerSideEncryption encrypt.ServerSide
 }
 
 type OtherPutObjectOption func(o *OtherPutObjectOptions)

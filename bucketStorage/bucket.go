@@ -19,7 +19,7 @@ type CacheBucket struct {
 }
 
 type Bucket struct {
-	client  Client
+	client     Client
 	bucketName string
 	ConfigInfo
 	minioClient
@@ -32,7 +32,7 @@ func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
 	}
 
 	return &Bucket{
-		client: c,
+		client:     c,
 		bucketName: bucketName,
 		ConfigInfo: ConfigInfo{
 			configName,
@@ -55,7 +55,7 @@ func NewCacheBucket(bucketName, configName, configPath string) (*CacheBucket, er
 	return &CacheBucket{
 		cacher: ca,
 		Bucket: Bucket{
-			client: c,
+			client:     c,
 			bucketName: bucketName,
 			ConfigInfo: ConfigInfo{
 				configName,
@@ -67,12 +67,12 @@ func NewCacheBucket(bucketName, configName, configPath string) (*CacheBucket, er
 
 func (b *Bucket) MakeBucket(opts ...OtherMakeBucketOption) error {
 	const (
-		defaultRegion = "us-east-1"
+		defaultRegion        = "us-east-1"
 		defaultObjectLocking = false
 	)
 
 	o := &MakeBucketOptions{
-		Region: defaultRegion,
+		Region:        defaultRegion,
 		ObjectLocking: defaultObjectLocking,
 	}
 
@@ -253,7 +253,7 @@ func (b *Bucket) PutObject(objectName string, reader io.Reader, objectSize int64
 		opt(o)
 	}
 
-	err = b.client.PutObject(b.bucketName, objectName, &buf, objectSize,  o)
+	err = b.client.PutObject(b.bucketName, objectName, &buf, objectSize, o)
 	if err != nil {
 		return err
 	}
@@ -276,12 +276,12 @@ func (b *Bucket) PutObject(objectName string, reader io.Reader, objectSize int64
 }
 
 func (b *Bucket) PresignedPutObject(ctx context.Context, objectName string, expires time.Duration) (*url.URL, error) {
- url, err := b.client.PresignedPutObject(b.bucketName, objectName, expires)
- if err != nil {
- 	return nil, err
- }
+	url, err := b.client.PresignedPutObject(b.bucketName, objectName, expires)
+	if err != nil {
+		return nil, err
+	}
 
- return url, nil
+	return url, nil
 }
 
 func (b *Bucket) PresignedGetObject(ctx context.Context, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {

@@ -75,10 +75,9 @@ func newMinioClient(configName, configPath string) (Client, error) {
 	t, err := minio.DefaultTransport(secure.(bool))
 	t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	mc, err := minio.New(endpoint.(string), &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKeyID.(string), secretAccessKey.(string), ""),
-		Secure: secure.(bool),
+		Creds:     credentials.NewStaticV4(accessKeyID.(string), secretAccessKey.(string), ""),
+		Secure:    secure.(bool),
 		Transport: t,
-
 	})
 	if err != nil {
 		return nil, err
@@ -267,8 +266,8 @@ func (m *minioClient) ListObjects(bucketName string, o *ListObjectsOptions) <-ch
 }
 
 type Config struct {
-	Client map[string]interface{}
-	Cache map[string]interface{}
+	Client   map[string]interface{}
+	Cache    map[string]interface{}
 	Database map[string]interface{}
 }
 
@@ -294,5 +293,3 @@ func GetConfig(configName, configPath string) (*Config, error) {
 
 	return &config, nil
 }
-
-

@@ -12,7 +12,7 @@ func (b *Bucket) RemoveObject(objectName string) error {
 	}
 
 	for _, v := range clients {
-		err := v.client.RemoveObject(context.Background(), b.bucketName, objectName, minio.RemoveObjectOptions{ true, ""})
+		err := v.client.RemoveObject(context.Background(), b.bucketName, objectName, minio.RemoveObjectOptions{true, ""})
 		if err != nil {
 			return err
 		}

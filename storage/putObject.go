@@ -11,13 +11,13 @@ import (
 
 type ObjectServerSideEncryptions struct {
 	encryption bool
-	password string
+	password   string
 }
 
 func (b *Bucket) PutObject(objectName string, object *os.File, opts ObjectServerSideEncryptions) error {
 	var e encrypt.ServerSide
 	if opts.encryption && opts.password != "" {
-		e = encrypt.DefaultPBKDF([]byte(opts.password), []byte(b.bucketName + objectName))
+		e = encrypt.DefaultPBKDF([]byte(opts.password), []byte(b.bucketName+objectName))
 	}
 
 	objectStat, err := object.Stat()
@@ -34,7 +34,7 @@ func (b *Bucket) PutObject(objectName string, object *os.File, opts ObjectServer
 	if b.cache && exists {
 		err = b.setCacheObject(buf, objectName)
 		if err != nil {
-			log.Println("errors in set cache: ",err)
+			log.Println("errors in set cache: ", err)
 		}
 	}
 
