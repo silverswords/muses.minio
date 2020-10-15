@@ -9,7 +9,6 @@ import (
 	"github.com/minio/minio-go/v7/pkg/replication"
 	"github.com/spf13/viper"
 	"io"
-	"log"
 	"net/url"
 	"time"
 )
@@ -63,7 +62,6 @@ func newMinioClient(configName, configPath string) (Client, error) {
 		return nil, err
 	}
 
-	log.Println("--------- ac.config ---------", ac)
 	secure := ac.Client["secure"]
 	endpoint := ac.Client["endpoint"]
 	accessKeyID := ac.Client["accessKeyID"]
