@@ -52,6 +52,7 @@ func WithMFADelete(mfaDelete string) OtherSetBucketVersioningOption {
 
 type OtherPutObjectOptions struct {
 	ServerSideEncryption encrypt.ServerSide
+	ObjectSize int64
 }
 
 type OtherPutObjectOption func(o *OtherPutObjectOptions)
@@ -59,6 +60,12 @@ type OtherPutObjectOption func(o *OtherPutObjectOptions)
 func WithServerSideEncryption(ServerSideEncryption encrypt.ServerSide) OtherPutObjectOption {
 	return func(o *OtherPutObjectOptions) {
 		o.ServerSideEncryption = ServerSideEncryption
+	}
+}
+
+func WithObjectSize(ObjectSize int64) OtherPutObjectOption {
+	return func(o *OtherPutObjectOptions) {
+		o.ObjectSize = ObjectSize
 	}
 }
 

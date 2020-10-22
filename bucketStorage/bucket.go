@@ -3,8 +3,6 @@ package bucketStorage
 import (
 	"bytes"
 	"context"
-	"crypto/md5"
-	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/minio/minio-go/v7/pkg/replication"
@@ -13,13 +11,32 @@ import (
 	"time"
 )
 
-type CacheBucket struct {
-	cacher Cacher
-	Bucket
+type Bucketer interface {
+	Uploader
+	Downloader
+	Remover
 }
+
+type Uploader interface {
+	PutObject(objectName string, reader io.Reader, opts ...OtherPutObjectOption) error
+}
+
+type Downloader interface {
+	GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error)
+}
+
+type Remover interface {
+	RemoveObject(objectName string, opts ...OtherRemoveObjectOption) error
+}
+
+//type CacheBucket struct {
+//	cacher Cacher
+//	Bucket
+//}
 
 type Bucket struct {
 	client     Client
+	cacher     Cacher
 	bucketName string
 	ConfigInfo
 	minioClient
@@ -31,8 +48,14 @@ func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
 		return nil, err
 	}
 
+	ca, err := initCache(configName, configPath)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Bucket{
 		client:     c,
+		cacher:     ca,
 		bucketName: bucketName,
 		ConfigInfo: ConfigInfo{
 			configName,
@@ -41,29 +64,29 @@ func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
 	}, nil
 }
 
-func NewCacheBucket(bucketName, configName, configPath string) (*CacheBucket, error) {
-	c, err := initClient(configName, configPath)
-	if err != nil {
-		return nil, err
-	}
-
-	ca, err := initCache(configName, configPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return &CacheBucket{
-		cacher: ca,
-		Bucket: Bucket{
-			client:     c,
-			bucketName: bucketName,
-			ConfigInfo: ConfigInfo{
-				configName,
-				configPath,
-			},
-		},
-	}, nil
-}
+//func NewCacheBucket(bucketName, configName, configPath string) (*CacheBucket, error) {
+//	c, err := initClient(configName, configPath)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	ca, err := initCache(configName, configPath)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return &CacheBucket{
+//		cacher: ca,
+//		Bucket: Bucket{
+//			client:     c,
+//			bucketName: bucketName,
+//			ConfigInfo: ConfigInfo{
+//				configName,
+//				configPath,
+//			},
+//		},
+//	}, nil
+//}
 
 func (b *Bucket) MakeBucket(opts ...OtherMakeBucketOption) error {
 	const (
@@ -208,69 +231,42 @@ func (b *Bucket) GetObjectLockConfig() (string, string, *uint, string, error) {
 	return objectLock, mode, validity, uint, nil
 }
 
-func (cb *CacheBucket) PutObject(objectName string, reader io.Reader, objectSize int64, opts ...OtherPutObjectOption) error {
+func (b *Bucket) PutObject(objectName string, reader io.Reader, opts ...OtherPutObjectOption) error {
 	var buf bytes.Buffer
-	cacheBytes := make([]byte, objectSize)
-
-	teeReader := io.TeeReader(reader, &buf)
-	_, err := teeReader.Read(cacheBytes)
-	if err != nil {
-		return err
-	}
-
-	err = cb.Bucket.PutObject(objectName, &buf, objectSize, opts...)
-	if err != nil {
-		return err
-	}
-
-	err = cb.cacher.PutObject(objectName, cacheBytes)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (b *Bucket) PutObject(objectName string, reader io.Reader, objectSize int64, opts ...OtherPutObjectOption) error {
-	var buf bytes.Buffer
-	cacheBytes := make([]byte, objectSize)
-	teeReader := io.TeeReader(reader, &buf)
-	_, err := teeReader.Read(cacheBytes)
-	if err != nil {
-		return err
-	}
 
 	var e encrypt.ServerSide
+	var d = int64(1024)
 	var (
 		defaultServerSideEncryption = e
+		defaultObjectSize = d
 	)
 
 	o := &OtherPutObjectOptions{
 		defaultServerSideEncryption,
+		defaultObjectSize,
 	}
 
 	for _, opt := range opts {
 		opt(o)
 	}
 
-	err = b.client.PutObject(b.bucketName, objectName, &buf, objectSize, o)
+	cacheBytes := make([]byte, o.ObjectSize)
+
+	teeReader := io.TeeReader(reader, &buf)
+	_, err := teeReader.Read(cacheBytes)
 	if err != nil {
 		return err
 	}
 
-	h := md5.New()
-	_, err = io.WriteString(h, objectName)
+	err = b.client.PutObject(b.bucketName, objectName, &buf, o)
 	if err != nil {
 		return err
 	}
 
-	_, err = h.Write(cacheBytes)
+	err = b.cacher.PutObject(objectName, cacheBytes)
 	if err != nil {
 		return err
 	}
-
-	m := h.Sum(nil)
-	fmt.Printf("%x", m)
 
 	return nil
 }
@@ -293,24 +289,6 @@ func (b *Bucket) PresignedGetObject(ctx context.Context, objectName string, expi
 	return url, nil
 }
 
-func (cb *CacheBucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error) {
-	var buf []byte
-	buf, err := cb.cacher.GetObject(objectName)
-	if err != nil {
-		return nil, err
-	}
-	if buf != nil {
-		return buf, nil
-	}
-
-	buf, err = cb.Bucket.GetObject(objectName, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	return buf, nil
-}
-
 func (b *Bucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error) {
 	var buf []byte
 	var e encrypt.ServerSide
@@ -322,26 +300,20 @@ func (b *Bucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]b
 		opt(o)
 	}
 
-	buf, err := b.client.GetObject(b.bucketName, objectName, o)
+	buf, err := b.cacher.GetObject(objectName)
+	if err != nil {
+		return nil, err
+	}
+	if buf != nil {
+		return buf, nil
+	}
+
+	buf, err = b.client.GetObject(b.bucketName, objectName, o)
 	if err != nil {
 		return nil, err
 	}
 
 	return buf, nil
-}
-
-func (cb *CacheBucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption) error {
-	err := cb.Bucket.RemoveObject(objectName, opts...)
-	if err != nil {
-		return err
-	}
-
-	err = cb.cacher.RemoveObject(objectName)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption) error {
@@ -358,6 +330,11 @@ func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption
 	}
 
 	err := b.client.RemoveObject(b.bucketName, objectName, o)
+	if err != nil {
+		return err
+	}
+
+	err = b.cacher.RemoveObject(objectName)
 	if err != nil {
 		return err
 	}

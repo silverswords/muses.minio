@@ -14,7 +14,7 @@ import (
 )
 
 type Client interface {
-	PutObject(bucketName string, objectName string, reader io.Reader, objectSize int64, o *OtherPutObjectOptions) error
+	PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error
 	PresignedPutObject(bucketName string, objectName string, expires time.Duration) (*url.URL, error)
@@ -206,8 +206,8 @@ func (m *minioClient) GetObjectLockConfig(bucketName string) (string, string, *u
 	return objectLock, mr, validity, u, nil
 }
 
-func (m *minioClient) PutObject(bucketName string, objectName string, reader io.Reader, objectSize int64, o *OtherPutObjectOptions) error {
-	_, err := m.mc.PutObject(context.Background(), bucketName, objectName, reader, objectSize, minio.PutObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
+func (m *minioClient) PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error {
+	_, err := m.mc.PutObject(context.Background(), bucketName, objectName, reader, o.ObjectSize, minio.PutObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
 	if err != nil {
 		return err
 	}

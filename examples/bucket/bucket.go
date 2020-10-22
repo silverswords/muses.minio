@@ -36,7 +36,7 @@ func main() {
 	}
 
 	if ok {
-		err = bucket.PutObject("cat", file, stat.Size())
+		err = bucket.PutObject("cat", file, bucketStorage.WithObjectSize(stat.Size()))
 		if err != nil {
 			log.Println("errors in PutObject", err)
 		}
