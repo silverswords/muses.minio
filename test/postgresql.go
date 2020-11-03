@@ -40,7 +40,7 @@ func main() {
 		_ = tx.Rollback()
 		log.Fatal(err)
 	}
-	log.Println(rows)
+	log.Println(&rows)
 
 	err = tx.Commit()
 	if err != nil {
