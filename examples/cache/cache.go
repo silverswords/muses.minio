@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-	cb, err := bucketStorage.NewCacheBucket("moon", "config.yaml", "../")
+	cb, err := bucketStorage.NewBucket("moon", "config.yaml", "../")
 	if err != nil {
-		log.Println("errors in NewBucketConfig", err)
+		log.Println("errors in NewBucket", err)
 	}
 
 	err = cb.MakeBucket()
@@ -30,13 +30,8 @@ func main() {
 	}
 	defer file.Close()
 
-	stat, err := file.Stat()
-	if err != nil {
-		log.Println("errors in Stat", err)
-	}
-
 	if ok {
-		err = cb.PutObject("bluemoon", file, stat.Size())
+		err = cb.PutObject("bluemoon", file)
 		if err != nil {
 			log.Println("errors in PutObject", err)
 		}

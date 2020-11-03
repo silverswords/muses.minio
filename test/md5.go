@@ -8,7 +8,7 @@ import (
 
 func main() {
 	h := md5.New()
-	io.WriteString(h, "The fog is getting thicker!")
-	io.WriteString(h, "And Leon's getting laaarger!")
+	_, _ = io.WriteString(h, "The fog is getting thicker!")
+	_, _ = io.WriteString(h, "And Leon's getting laaarger!")
 	fmt.Printf("%x", h.Sum(nil))
 }

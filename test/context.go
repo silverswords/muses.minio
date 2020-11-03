@@ -13,7 +13,7 @@ func hello(w http.ResponseWriter, req *http.Request) {
 
 	select {
 	case <-time.After(20 * time.Second):
-		fmt.Fprintf(w, "hello\n")
+		_, _ = fmt.Fprintf(w, "hello\n")
 	case <-ctx.Done():
 		err := ctx.Err()
 		fmt.Println("server:", err)
@@ -24,5 +24,5 @@ func hello(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	http.HandleFunc("/hello", hello)
-	http.ListenAndServe(":8090", nil)
+	_ = http.ListenAndServe(":8090", nil)
 }
