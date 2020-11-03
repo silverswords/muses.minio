@@ -24,9 +24,31 @@ func main() {
 	}
 	fmt.Println("Successfully connected!")
 
-	rows, err := db.Query("SELECT * FROM myschema.object;")
+	tx, err := db.Begin()
 	if err != nil {
-		log.Println(err, "exec failed")
+		log.Fatal(err)
+	}
+
+	_, err = tx.Exec("INSERT INTO myschema.object(objectname, md5, count) VALUES ('cat.png', 'asdf', 2);")
+	if err != nil {
+		_ = tx.Rollback()
+		log.Fatal(err)
+	}
+
+	rows, err := tx.Query("SELECT * FROM myschema.object;")
+	if err != nil {
+		_ = tx.Rollback()
+		log.Fatal(err)
 	}
 	log.Println(rows)
+
+	err = tx.Commit()
+	if err != nil {
+		log.Fatal(err)
+	}
+	//rows, err := db.Query("SELECT * FROM myschema.object;")
+	//if err != nil {
+	//	log.Println(err, "exec failed")
+	//}
+	//log.Println(rows)
 }
