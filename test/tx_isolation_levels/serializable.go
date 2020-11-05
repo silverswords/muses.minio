@@ -8,12 +8,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type Object3 struct {
-	objectName string
-	md5 string
-	count int
-}
-
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
@@ -35,7 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, err = tx1.Exec("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;")
+	_, err = tx1.Exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;")
 	if err != nil {
 		log.Println(err)
 	}
@@ -56,7 +50,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, err = tx2.Exec("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;")
+	_, err = tx2.Exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;")
 	if err != nil {
 		log.Println(err)
 	}
@@ -65,12 +59,18 @@ func main() {
 	_ = rows.Scan(&sum)
 	log.Println(sum)
 
-	err = tx1.Commit()
+	_, err = tx2.Exec("INSERT INTO myschema.users(class, value) VALUES (1, $1);", sum)
 	if err != nil {
+		_ = tx1.Rollback()
 		log.Fatal(err)
 	}
 
 	err = tx2.Commit()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = tx1.Commit()
 	if err != nil {
 		log.Fatal(err)
 	}
