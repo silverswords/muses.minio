@@ -29,11 +29,6 @@ type Remover interface {
 	RemoveObject(objectName string, opts ...OtherRemoveObjectOption) error
 }
 
-//type CacheBucket struct {
-//	cacher Cacher
-//	Bucket
-//}
-
 type Bucket struct {
 	client     Client
 	cacher     Cacher
@@ -63,30 +58,6 @@ func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
 		},
 	}, nil
 }
-
-//func NewCacheBucket(bucketName, configName, configPath string) (*CacheBucket, error) {
-//	c, err := initClient(configName, configPath)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	ca, err := initCache(configName, configPath)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return &CacheBucket{
-//		cacher: ca,
-//		Bucket: Bucket{
-//			client:     c,
-//			bucketName: bucketName,
-//			ConfigInfo: ConfigInfo{
-//				configName,
-//				configPath,
-//			},
-//		},
-//	}, nil
-//}
 
 func (b *Bucket) MakeBucket(opts ...OtherMakeBucketOption) error {
 	const (
