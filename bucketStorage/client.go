@@ -17,22 +17,6 @@ type Client interface {
 	PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error
-	PresignedPutObject(bucketName string, objectName string, expires time.Duration) (*url.URL, error)
-	PresignedGetObject(bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
-	ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo
-	SetObjectLockConfig(bucketName string, mode string, validity *uint, uint string) error
-	GetObjectLockConfig(bucketName string) (string, string, *uint, string, error)
-	MakeBucket(bucketName string, o *MakeBucketOptions) error
-	CheckBucket(bucketName string) (bool, error)
-	ListBuckets() ([]minio.BucketInfo, error)
-	RemoveBucket(bucketName string) error
-	SetBucketVersioning(bucketName string, o *SetBucketVersioningOptions) error
-	GetBucketVersioning(bucketName string) (minio.BucketVersioningConfiguration, error)
-	SetBucketReplication(bucketName string, cfg replication.Config) error
-	GetBucketReplication(bucketName string) (replication.Config, error)
-	RemoveBucketReplication(bucketName string) error
-	SetBucketPolicy(bucketName, policy string) error
-	GetBucketPolicy(bucketName string) (string, error)
 }
 
 type minioClient struct {
