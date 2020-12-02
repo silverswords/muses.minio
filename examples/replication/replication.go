@@ -13,18 +13,18 @@ func main() {
 		log.Println("errors in NewBucketConfig", err)
 	}
 
-	err = bucket.MakeBucket()
+	err = bucketStorage.MakeBucket(bucket)
 	if err != nil {
 		log.Println("errors in MakeBucket", err)
 	}
 
-	ok, err := bucket.CheckBucket()
+	ok, err := bucketStorage.CheckBucket(bucket)
 	if err != nil {
 		log.Println("errors in CheckBucket", err)
 	}
 
 	if ok {
-		err := bucket.SetBucketVersioning()
+		err := bucketStorage.SetBucketVersioning(bucket)
 		if err != nil {
 			log.Println("errors in SetBucketVersioning", err)
 		}
@@ -39,7 +39,7 @@ func main() {
 		// This replication ARN should have been generated for replication endpoint using `mc admin bucket remote` command
 		replCfg.Role = "arn:minio:replication:us-east-1:9f6c650d-6b5a-4e12-8e47-33f135dcb90f:test"
 
-		err = bucket.SetBucketReplication(replCfg)
+		err = bucketStorage.SetBucketReplication(bucket, replCfg)
 		if err != nil {
 			log.Println("errors in SetBucketReplication", err)
 		}

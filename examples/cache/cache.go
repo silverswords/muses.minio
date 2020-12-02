@@ -14,12 +14,12 @@ func main() {
 		log.Println("errors in NewBucket", err)
 	}
 
-	err = cb.MakeBucket()
+	err = bucketStorage.MakeBucket(cb)
 	if err != nil {
 		log.Println("errors in MakeBucket", err)
 	}
 
-	ok, err := cb.CheckBucket()
+	ok, err := bucketStorage.CheckBucket(cb)
 	if err != nil {
 		log.Println("errors in CheckBucket", err)
 	}
@@ -31,12 +31,12 @@ func main() {
 	defer file.Close()
 
 	if ok {
-		err = cb.PutObject("bluemoon", file)
+		err = bucketStorage.PutObject(cb, "bluemoon", file)
 		if err != nil {
 			log.Println("errors in PutObject", err)
 		}
 
-		minioObject, err := cb.GetObject("bluemoon")
+		minioObject, err := bucketStorage.GetObject(cb,"bluemoon")
 		if err != nil {
 			log.Println("errors in GetObject", err)
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/minio/minio-go/v7/pkg/replication"
@@ -14,12 +15,14 @@ import (
 )
 
 type Client interface {
+	MakeBucket(bucketName string, o *MakeBucketOptions) error
 	PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error)
 	RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error
+	ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo
 }
 
-type minioClient struct {
+type MinioClient struct {
 	mc *minio.Client
 }
 
@@ -40,7 +43,7 @@ func initClient(configName, configPath string) (Client, error) {
 	return nil, nil
 }
 
-func newMinioClient(configName, configPath string) (Client, error) {
+func newMinioClient(configName, configPath string) (*MinioClient, error) {
 	ac, err := GetConfig(configName, configPath)
 	if err != nil {
 		return nil, err
@@ -56,6 +59,7 @@ func newMinioClient(configName, configPath string) (Client, error) {
 	}
 	t, err := minio.DefaultTransport(secure.(bool))
 	t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	fmt.Println(endpoint, accessKeyID, secretAccessKey, secure, "parameters")
 	mc, err := minio.New(endpoint.(string), &minio.Options{
 		Creds:     credentials.NewStaticV4(accessKeyID.(string), secretAccessKey.(string), ""),
 		Secure:    secure.(bool),
@@ -65,13 +69,15 @@ func newMinioClient(configName, configPath string) (Client, error) {
 		return nil, err
 	}
 
-	return &minioClient{
+	fmt.Println(mc, "mc------------")
+	return &MinioClient{
 		mc,
 	}, nil
 }
 
-func (m *minioClient) MakeBucket(bucketName string, o *MakeBucketOptions) error {
-	err := m.mc.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{o.Region, o.ObjectLocking})
+func (m *MinioClient) MakeBucket(bucketName string, o *MakeBucketOptions) error {
+	fmt.Println(bucketName, "bucketName", o.Region, o.ObjectLocking)
+	err := m.mc.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{Region: o.Region, ObjectLocking: o.ObjectLocking})
 	if err != nil {
 		return err
 	}
@@ -79,7 +85,7 @@ func (m *minioClient) MakeBucket(bucketName string, o *MakeBucketOptions) error 
 	return nil
 }
 
-func (m *minioClient) CheckBucket(bucketName string) (bool, error) {
+func (m *MinioClient) CheckBucket(bucketName string) (bool, error) {
 	exists, err := m.mc.BucketExists(context.Background(), bucketName)
 	if err != nil {
 		return false, err
@@ -88,7 +94,7 @@ func (m *minioClient) CheckBucket(bucketName string) (bool, error) {
 	return exists, nil
 }
 
-func (m *minioClient) ListBuckets() ([]minio.BucketInfo, error) {
+func (m *MinioClient) ListBuckets() ([]minio.BucketInfo, error) {
 	bucketInfos, err := m.mc.ListBuckets(context.Background())
 	if err != nil {
 		return nil, err
@@ -97,7 +103,7 @@ func (m *minioClient) ListBuckets() ([]minio.BucketInfo, error) {
 	return bucketInfos, nil
 }
 
-func (m *minioClient) RemoveBucket(bucketName string) error {
+func (m *MinioClient) RemoveBucket(bucketName string) error {
 	err := m.mc.RemoveBucket(context.Background(), bucketName)
 	if err != nil {
 		return err
@@ -106,7 +112,7 @@ func (m *minioClient) RemoveBucket(bucketName string) error {
 	return nil
 }
 
-func (m *minioClient) SetBucketVersioning(bucketName string, o *SetBucketVersioningOptions) error {
+func (m *MinioClient) SetBucketVersioning(bucketName string, o *SetBucketVersioningOptions) error {
 	err := m.mc.SetBucketVersioning(context.Background(), bucketName, minio.BucketVersioningConfiguration{XMLName: o.XMLName, Status: o.Status, MFADelete: o.MFADelete})
 	if err != nil {
 		return err
@@ -115,7 +121,7 @@ func (m *minioClient) SetBucketVersioning(bucketName string, o *SetBucketVersion
 	return nil
 }
 
-func (m *minioClient) GetBucketVersioning(bucketName string) (minio.BucketVersioningConfiguration, error) {
+func (m *MinioClient) GetBucketVersioning(bucketName string) (minio.BucketVersioningConfiguration, error) {
 	bucketVersioningConfiguration, err := m.mc.GetBucketVersioning(context.Background(), bucketName)
 	if err != nil {
 		return bucketVersioningConfiguration, err
@@ -124,7 +130,7 @@ func (m *minioClient) GetBucketVersioning(bucketName string) (minio.BucketVersio
 	return bucketVersioningConfiguration, nil
 }
 
-func (m *minioClient) SetBucketReplication(bucketName string, cfg replication.Config) error {
+func (m *MinioClient) SetBucketReplication(bucketName string, cfg replication.Config) error {
 	err := m.mc.SetBucketReplication(context.Background(), bucketName, cfg)
 	if err != nil {
 		return err
@@ -133,7 +139,7 @@ func (m *minioClient) SetBucketReplication(bucketName string, cfg replication.Co
 	return nil
 }
 
-func (m *minioClient) GetBucketReplication(bucketName string) (replication.Config, error) {
+func (m *MinioClient) GetBucketReplication(bucketName string) (replication.Config, error) {
 	cfg, err := m.mc.GetBucketReplication(context.Background(), bucketName)
 	if err != nil {
 		return cfg, err
@@ -142,7 +148,7 @@ func (m *minioClient) GetBucketReplication(bucketName string) (replication.Confi
 	return cfg, nil
 }
 
-func (m *minioClient) RemoveBucketReplication(bucketName string) error {
+func (m *MinioClient) RemoveBucketReplication(bucketName string) error {
 	err := m.mc.RemoveBucketReplication(context.Background(), bucketName)
 	if err != nil {
 		return err
@@ -151,7 +157,7 @@ func (m *minioClient) RemoveBucketReplication(bucketName string) error {
 	return nil
 }
 
-func (m *minioClient) SetBucketPolicy(bucketName, policy string) error {
+func (m *MinioClient) SetBucketPolicy(bucketName, policy string) error {
 	err := m.mc.SetBucketPolicy(context.Background(), bucketName, policy)
 	if err != nil {
 		return err
@@ -160,7 +166,7 @@ func (m *minioClient) SetBucketPolicy(bucketName, policy string) error {
 	return nil
 }
 
-func (m *minioClient) GetBucketPolicy(bucketName string) (string, error) {
+func (m *MinioClient) GetBucketPolicy(bucketName string) (string, error) {
 	policy, err := m.mc.GetBucketPolicy(context.Background(), bucketName)
 	if err != nil {
 		return "", err
@@ -169,7 +175,7 @@ func (m *minioClient) GetBucketPolicy(bucketName string) (string, error) {
 	return policy, nil
 }
 
-func (m *minioClient) SetObjectLockConfig(bucketName string, mode string, validity *uint, uint string) error {
+func (m *MinioClient) SetObjectLockConfig(bucketName string, mode string, validity *uint, uint string) error {
 	mr := (*minio.RetentionMode)(&mode)
 	u := (*minio.ValidityUnit)(&uint)
 	err := m.mc.SetObjectLockConfig(context.Background(), bucketName, mr, validity, u)
@@ -180,17 +186,17 @@ func (m *minioClient) SetObjectLockConfig(bucketName string, mode string, validi
 	return nil
 }
 
-func (m *minioClient) GetObjectLockConfig(bucketName string) (string, string, *uint, string, error) {
-	objectLock, mode, validity, uint, err := m.mc.GetObjectLockConfig(context.Background(), bucketName)
+func (m *MinioClient) GetObjectLockConfig(bucketName string) (string, string, *uint, string, error) {
+	objectLock, mode, validity, v, err := m.mc.GetObjectLockConfig(context.Background(), bucketName)
 	if err != nil {
 		return "", "", nil, "", err
 	}
 	mr := string(*mode)
-	u := string(*uint)
+	u := string(*v)
 	return objectLock, mr, validity, u, nil
 }
 
-func (m *minioClient) PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error {
+func (m *MinioClient) PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error {
 	_, err := m.mc.PutObject(context.Background(), bucketName, objectName, reader, o.ObjectSize, minio.PutObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
 	if err != nil {
 		return err
@@ -198,7 +204,7 @@ func (m *minioClient) PutObject(bucketName string, objectName string, reader io.
 	return nil
 }
 
-func (m *minioClient) GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error) {
+func (m *MinioClient) GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error) {
 	minioObject, err := m.mc.GetObject(context.Background(), bucketName, objectName, minio.GetObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
 	if err != nil {
 		return nil, err
@@ -214,7 +220,7 @@ func (m *minioClient) GetObject(bucketName string, objectName string, o *GetObje
 	return buf, nil
 }
 
-func (m *minioClient) RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error {
+func (m *MinioClient) RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error {
 	err := m.mc.RemoveObject(context.Background(), bucketName, objectName, minio.RemoveObjectOptions{GovernanceBypass: o.GovernanceBypass})
 	if err != nil {
 		return err
@@ -223,25 +229,25 @@ func (m *minioClient) RemoveObject(bucketName string, objectName string, o *Remo
 	return nil
 }
 
-func (m *minioClient) PresignedPutObject(bucketName string, objectName string, expires time.Duration) (*url.URL, error) {
-	url, err := m.mc.PresignedPutObject(context.Background(), bucketName, objectName, expires)
+func (m *MinioClient) PresignedPutObject(bucketName string, objectName string, expires time.Duration) (*url.URL, error) {
+	u, err := m.mc.PresignedPutObject(context.Background(), bucketName, objectName, expires)
 	if err != nil {
 		return nil, err
 	}
 
-	return url, nil
+	return u, nil
 }
 
-func (m *minioClient) PresignedGetObject(bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
-	url, err := m.mc.PresignedGetObject(context.Background(), bucketName, objectName, expires, reqParams)
+func (m *MinioClient) PresignedGetObject(bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
+	u, err := m.mc.PresignedGetObject(context.Background(), bucketName, objectName, expires, reqParams)
 	if err != nil {
 		return nil, err
 	}
 
-	return url, nil
+	return u, nil
 }
 
-func (m *minioClient) ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo {
+func (m *MinioClient) ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo {
 	objectInfo := m.mc.ListObjects(context.Background(), bucketName, minio.ListObjectsOptions{Prefix: o.prefix})
 
 	return objectInfo

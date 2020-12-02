@@ -14,12 +14,12 @@ func main() {
 		log.Println("errors in NewBucketConfig", err)
 	}
 
-	err = bucket.MakeBucket()
+	err = bucketStorage.MakeBucket(bucket)
 	if err != nil {
 		log.Println("errors in MakeBucket", err)
 	}
 
-	ok, err := bucket.CheckBucket()
+	ok, err := bucketStorage.CheckBucket(bucket)
 	if err != nil {
 		log.Println("errors in CheckBucket", err)
 	}
@@ -36,12 +36,12 @@ func main() {
 	}
 
 	if ok {
-		err = bucket.PutObject("cat", file, bucketStorage.WithObjectSize(stat.Size()))
+		err = bucketStorage.PutObject(bucket,"cat", file, bucketStorage.WithObjectSize(stat.Size()))
 		if err != nil {
 			log.Println("errors in PutObject", err)
 		}
 
-		minioObject, err := bucket.GetObject("cat")
+		minioObject, err := bucketStorage.GetObject(bucket,"cat")
 		if err != nil {
 			log.Println("errors in GetObject", err)
 		}
