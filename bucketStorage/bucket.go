@@ -3,10 +3,12 @@ package bucketStorage
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/minio/minio-go/v7/pkg/replication"
 	"io"
+	"log"
 	"net/url"
 	"time"
 )
@@ -45,9 +47,10 @@ func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
 
 	ca, err := initCache(configName, configPath)
 	if err != nil {
-		return nil, err
+		log.Println(err)
 	}
 
+	fmt.Println("cacher:", ca)
 	return &Bucket{
 		client:     c,
 		cacher:     ca,
@@ -234,9 +237,11 @@ func PutObject(b *Bucket, objectName string, reader io.Reader, opts ...OtherPutO
 		return err
 	}
 
-	err = b.cacher.PutObject(objectName, cacheBytes)
-	if err != nil {
-		return err
+	if b.cacher != nil {
+		err = b.cacher.PutObject(objectName, cacheBytes)
+		if err != nil {
+			log.Println("cache putObject:", err)
+		}
 	}
 
 	return nil
@@ -244,15 +249,6 @@ func PutObject(b *Bucket, objectName string, reader io.Reader, opts ...OtherPutO
 
 func PresignedPutObject(b *Bucket, ctx context.Context, objectName string, expires time.Duration) (*url.URL, error) {
 	url, err := b.PresignedPutObject(b.bucketName, objectName, expires)
-	if err != nil {
-		return nil, err
-	}
-
-	return url, nil
-}
-
-func PresignedGetObject(b *Bucket, ctx context.Context, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
-	url, err := b.PresignedGetObject(b.bucketName, objectName, expires, reqParams)
 	if err != nil {
 		return nil, err
 	}
@@ -271,20 +267,31 @@ func GetObject(b *Bucket, objectName string, opts ...OtherGetObjectOption) ([]by
 		opt(o)
 	}
 
-	buf, err := b.cacher.GetObject(objectName)
-	if err != nil {
-		return nil, err
-	}
-	if buf != nil {
-		return buf, nil
+	if b.cacher != nil {
+		buf, err := b.cacher.GetObject(objectName)
+		if err != nil {
+			log.Println("cache getObject:", err)
+		}
+		if buf != nil {
+			return buf, nil
+		}
 	}
 
-	buf, err = b.client.GetObject(b.bucketName, objectName, o)
+	buf, err := b.client.GetObject(b.bucketName, objectName, o)
 	if err != nil {
 		return nil, err
 	}
 
 	return buf, nil
+}
+
+func PresignedGetObject(b *Bucket, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
+	url, err := b.client.PresignedGetObject(b.bucketName, objectName, expires, reqParams)
+	if err != nil {
+		return nil, err
+	}
+
+	return url, nil
 }
 
 func RemoveObject(b *Bucket, objectName string, opts ...OtherRemoveObjectOption) error {
@@ -305,9 +312,11 @@ func RemoveObject(b *Bucket, objectName string, opts ...OtherRemoveObjectOption)
 		return err
 	}
 
-	err = b.cacher.RemoveObject(objectName)
-	if err != nil {
-		return err
+	if b.cacher != nil {
+		err = b.cacher.RemoveObject(objectName)
+		if err != nil {
+			log.Println("cache removeObject:", err)
+		}
 	}
 
 	return nil

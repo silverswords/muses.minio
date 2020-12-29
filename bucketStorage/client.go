@@ -14,10 +14,19 @@ import (
 	"time"
 )
 
+type Metadata struct {
+	Properties map[string]interface{}
+}
+
+func NewMetadata() *Metadata {
+	return &Metadata{Properties: make(map[string]interface{})}
+}
+
 type Client interface {
 	MakeBucket(bucketName string, o *MakeBucketOptions) error
 	PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error)
+	PresignedGetObject(bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
 	RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error
 	ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo
 }
@@ -77,9 +86,15 @@ func newMinioClient(configName, configPath string) (*MinioClient, error) {
 
 func (m *MinioClient) MakeBucket(bucketName string, o *MakeBucketOptions) error {
 	fmt.Println(bucketName, "bucketName", o.Region, o.ObjectLocking)
-	err := m.mc.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{Region: o.Region, ObjectLocking: o.ObjectLocking})
+	exists, err := m.CheckBucket(bucketName)
 	if err != nil {
 		return err
+	}
+	if !exists {
+		err := m.mc.MakeBucket(context.Background(), bucketName, minio.MakeBucketOptions{Region: o.Region, ObjectLocking: o.ObjectLocking})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

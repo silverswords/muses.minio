@@ -1,17 +1,17 @@
 client:
   - clientName: client1
-    endpoint: 192.168.0.254:9000
+    endpoint: 192.168.0.252:9000
     accessKeyID: minio
     secretAccessKey: minio123
     secure: false
     clientType: minio
-cache:
-  - cacheName: cache1
-    cacheType: redis
-    cacheServerEndpoint: 127.0.0.1:6379
-database:
-  - host: localhost
-    port: 5432
-    user: postgres
-    password: 123456
-    dbname: minio
+#cache:
+#  - cacheName: cache1
+#    cacheType: redis
+#    cacheServerEndpoint: 127.0.0.1:6379
+#database:
+#  - host: localhost
+#    port: 5432
+#    user: postgres
+#    password: 123456
+#    dbname: minio

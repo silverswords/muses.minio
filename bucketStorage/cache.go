@@ -3,6 +3,7 @@ package bucketStorage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
 	"time"
@@ -23,9 +24,13 @@ func initCache(configName, configPath string) (Cacher, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("--------ac---------", ac, ac.Cache["cacheType"])
 	cacheType := ac.Cache["cacheType"]
+	if cacheType == nil {
+		return nil, errors.New("no cache")
+	}
 
-	if cacheType.(string) == "redis" {
+	if (cacheType != nil) && (cacheType.(string) == "redis") {
 		c, err := newRedisCache(configName, configPath)
 		if err != nil {
 			return nil, err
@@ -44,7 +49,7 @@ func newRedisCache(configName, configPath string) (Cacher, error) {
 	}
 
 	endpoint := ac.Cache["cacheServerEndpoint"]
-	if endpoint == "" {
+	if endpoint == nil || endpoint == "" {
 		return nil, errors.New("new cache failed")
 	}
 

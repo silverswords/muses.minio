@@ -6,11 +6,14 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/silverswords/muses.minio/bucketStorage"
-	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"net/url"
+	"time"
 )
 
 // BucketController -
@@ -46,7 +49,7 @@ func (b *BucketController) upload(c *gin.Context) {
 	var (
 		req struct {
 			ObjectName  string `json:"objectName"      binding:"required"`
-			Reader io.Reader `json:"reader"       binding:"required"`
+			File multipart.FileHeader `json:"file"       binding:"required"`
 		}
 	)
 
@@ -57,7 +60,15 @@ func (b *BucketController) upload(c *gin.Context) {
 		return
 	}
 
-	err = bucketStorage.PutObject(b.bucket, req.ObjectName, req.Reader)
+	file, err := req.File.Open()
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway,"error": err})
+		return
+	}
+
+	fileSize := req.File.Size
+	err = bucketStorage.PutObject(b.bucket, req.ObjectName, file, bucketStorage.WithObjectSize(fileSize))
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway,"error": err})
@@ -68,7 +79,21 @@ func (b *BucketController) upload(c *gin.Context) {
 }
 
 func (b *BucketController) delete(c *gin.Context) {
-	err := bucketStorage.RemoveBucket(b.bucket)
+	var (
+		req struct {
+			ObjectName  string `json:"objectName"      binding:"required"`
+		}
+	)
+
+	err := c.ShouldBind(&req)
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest})
+		return
+	}
+
+	fmt.Println(req.ObjectName, "------objectName-----")
+	err = bucketStorage.RemoveObject(b.bucket, req.ObjectName)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
@@ -92,14 +117,18 @@ func (b *BucketController) download(c *gin.Context) {
 		return
 	}
 
-	object, err := bucketStorage.GetObject(b.bucket, req.ObjectName)
+	//object, err := bucketStorage.GetObject(b.bucket, req.ObjectName)
+	reqParams := make(url.Values)
+	reqParams.Set("response-content-disposition", "attachment; filename=\"file\"")
+	u, err := bucketStorage.PresignedGetObject(b.bucket, req.ObjectName, time.Second*24*60*60, reqParams)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "object": object})
+	fmt.Println("url:", u)
+	c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "url": u})
 }
 
 func (b *BucketController) listObjects(c *gin.Context) {

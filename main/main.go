@@ -5,13 +5,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/silverswords/muses.minio/bucketStorage"
 	object "github.com/silverswords/muses.minio/controller/gin"
+	"log"
 )
 
 func main() {
 	router := gin.Default()
 	bucket, err := bucketStorage.NewBucket("ashe", "config.yaml", "../examples")
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	fmt.Println("hhh", bucket)
