@@ -14,20 +14,8 @@ import (
 	"time"
 )
 
-type Metadata struct {
-	Properties map[string]interface{}
-}
-
-func NewMetadata() *Metadata {
-	return &Metadata{Properties: make(map[string]interface{})}
-}
-
-const (
-	bucketName = "ashe"
-)
-
 type Client interface {
-	MakeBucket(md Metadata) error
+	MakeBucket(bucketName string, o *MakeBucketOptions) error
 	PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error
 	GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error)
 	PresignedGetObject(bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
@@ -88,7 +76,7 @@ func newMinioClient(configName, configPath string) (*MinioClient, error) {
 	}, nil
 }
 
-func (m *MinioClient) MakeBucket(md Metadata) error {
+func (m *MinioClient) MakeBucket(bucketName string, o *MakeBucketOptions) error {
 	fmt.Println(bucketName, "bucketName", o.Region, o.ObjectLocking)
 	exists, err := m.CheckBucket(bucketName)
 	if err != nil {

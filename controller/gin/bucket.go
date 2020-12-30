@@ -48,7 +48,6 @@ func (b *BucketController) RegisterRouter(r gin.IRouter) {
 func (b *BucketController) upload(c *gin.Context) {
 	var (
 		req struct {
-			ObjectName  string `json:"objectName"      binding:"required"`
 			File multipart.FileHeader `json:"file"       binding:"required"`
 		}
 	)
@@ -68,7 +67,7 @@ func (b *BucketController) upload(c *gin.Context) {
 	}
 
 	fileSize := req.File.Size
-	err = bucketStorage.PutObject(b.bucket, req.ObjectName, file, bucketStorage.WithObjectSize(fileSize))
+	err = bucketStorage.PutObject(b.bucket, req.File.Filename, file, bucketStorage.WithObjectSize(fileSize))
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway,"error": err})
