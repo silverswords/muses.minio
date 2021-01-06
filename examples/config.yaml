@@ -1,6 +1,6 @@
 client:
   - clientName: client1
-    endpoint: 192.168.0.252:9000
+    endpoint: 192.168.0.250:9000
     accessKeyID: minio
     secretAccessKey: minio123
     secure: false
