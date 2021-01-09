@@ -124,3 +124,27 @@ func (b *bucket) SignedURL(_ context.Context, key string, opts *driver.SignedURL
 	}
 	return u.Path, nil
 }
+
+func (b *bucket) listObjects(ctx context.Context, opts *driver.ListOptions) <- chan minio.ObjectInfo {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	defer cancel()
+
+	objectCh := b.client.ListObjects(ctx, b.name, minio.ListObjectsOptions{
+		Recursive: true,
+	})
+	for object := range objectCh {
+		if object.Err != nil {
+			fmt.Println(object.Err)
+		}
+		fmt.Println(object)
+	}
+	return objectCh
+}
+
+func (b *bucket) ListPaged(ctx context.Context, opts *driver.ListOptions) (*driver.ListPage, error) {
+	//var object []*driver.ListObject
+	_ = b.listObjects(ctx, opts)
+	page := driver.ListPage{}
+	return &page, nil
+}
