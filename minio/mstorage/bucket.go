@@ -3,13 +3,54 @@ package mstorage
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/silverswords/muses.minio/minio"
 	"github.com/silverswords/muses.minio/minio/driver"
 	"io"
 	"net/http"
 	"net/url"
 )
+
+type clientConfig struct {
+	endpoint string
+	accessKeyID string
+	secretAccessKey string
+	useSSL bool
+}
+
+func openBucket(ctx context.Context, conf clientConfig, bucketName string) (*bucket, error) {
+	if bucketName == "" {
+		return nil, errors.New("mstorage.OpenBucket: bucketName is required")
+	}
+
+	minioClient, err := minio.New(conf.endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(conf.accessKeyID, conf.secretAccessKey, ""),
+		Secure: conf.useSSL,
+	})
+	if err != nil {
+		return nil, err
+	}
+	
+	err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+	if err != nil {
+		return nil, errors.New("mstorage.OpenBucket: bucket creation failed")
+	}
+	return &bucket{
+		name:          bucketName,
+		client:        minioClient,
+	}, nil
+}
+
+func OpenBucket(ctx context.Context, conf clientConfig, bucketName string) (*mstorage.Bucket, error) {
+	drv, err := openBucket(ctx, conf, bucketName)
+	if err != nil {
+		return nil, err
+	}
+	return mstorage.NewBucket(drv), nil
+}
 
 type bucket struct {
 	name string
