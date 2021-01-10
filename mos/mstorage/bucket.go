@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/silverswords/muses.minio/minio"
-	"github.com/silverswords/muses.minio/minio/driver"
+	"github.com/silverswords/muses.minio/mos"
+	"github.com/silverswords/muses.minio/mos/driver"
 	"io"
 	"net/http"
 	"net/url"
@@ -33,7 +33,7 @@ func openBucket(ctx context.Context, conf clientConfig, bucketName string) (*buc
 	if err != nil {
 		return nil, err
 	}
-	
+
 	err = minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
 	if err != nil {
 		return nil, errors.New("mstorage.OpenBucket: bucket creation failed")
@@ -44,12 +44,12 @@ func openBucket(ctx context.Context, conf clientConfig, bucketName string) (*buc
 	}, nil
 }
 
-func OpenBucket(ctx context.Context, conf clientConfig, bucketName string) (*mstorage.Bucket, error) {
+func OpenBucket(ctx context.Context, conf clientConfig, bucketName string) (*mos.Bucket, error) {
 	drv, err := openBucket(ctx, conf, bucketName)
 	if err != nil {
 		return nil, err
 	}
-	return mstorage.NewBucket(drv), nil
+	return mos.NewBucket(drv), nil
 }
 
 type bucket struct {
