@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/silverswords/muses.minio/mos"
 	"github.com/silverswords/muses.minio/mos/driver"
 	"github.com/silverswords/muses.minio/mos/middleware"
 	"io"
@@ -45,12 +44,12 @@ func openBucket(ctx context.Context, conf clientConfig, bucketName string) (*buc
 	}, nil
 }
 
-func OpenBucket(ctx context.Context, conf clientConfig, bucketName string) (*mos.Bucket, error) {
-	drv, err := openBucket(ctx, conf, bucketName)
+func OpenBucket(ctx context.Context, conf clientConfig, bucketName string) error {
+	_, err := openBucket(ctx, conf, bucketName)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return mos.NewBucket(drv), nil
+	return nil
 }
 
 type bucket struct {
