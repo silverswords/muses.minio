@@ -36,6 +36,7 @@ type WriterOptions struct {
 	ContentMD5 []byte
 	Metadata map[string]string
 	BeforeWrite func(asFunc func(interface{}) bool) bool
+	LimitSize int64
 }
 
 type SignedURLOptions struct {

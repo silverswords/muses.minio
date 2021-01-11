@@ -13,7 +13,6 @@ type Bucket struct {
 	// and thereby prevent closing until a call finishes.
 	mu          sync.RWMutex
 	closed      bool
-	Middlewares []interface{}
 }
 
 var NewBucket = newBucket

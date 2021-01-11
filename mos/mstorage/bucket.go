@@ -9,6 +9,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/silverswords/muses.minio/mos"
 	"github.com/silverswords/muses.minio/mos/driver"
+	"github.com/silverswords/muses.minio/mos/middleware"
 	"io"
 	"net/http"
 	"net/url"
@@ -55,6 +56,7 @@ func OpenBucket(ctx context.Context, conf clientConfig, bucketName string) (*mos
 type bucket struct {
 	name string
 	client *minio.Client
+	mw middleware.Middlewares
 }
 
 type writer struct {
@@ -125,15 +127,20 @@ func (b *bucket) NewRangeReader(ctx context.Context, key string, offset, length 
 
 func (b *bucket) NewTypedWriter(ctx context.Context, key string, contentType string, opts *driver.WriterOptions) (driver.Writer, error) {
 	r := bytes.NewReader(opts.ContentMD5)
-	info, err := b.client.PutObject(ctx, b.name, key, r, int64(opts.BufferSize), minio.PutObjectOptions{ContentType: "application/octet-stream"})
-	if err != nil {
-		return nil, err
+	allSize := b.mw.ResourceLimit(b.name, int64(opts.BufferSize))
+	b.mw.AllSize += allSize
+	if (opts.LimitSize < 1) || (allSize > opts.LimitSize) {
+		info, err := b.client.PutObject(ctx, b.name, key, r, int64(opts.BufferSize), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+		if err != nil {
+			return nil, err
+		}
+		return &writer{
+			ctx:      ctx,
+			uploader: &info,
+			donec:    make(chan struct{}),
+		}, nil
 	}
-	return &writer{
-		ctx:      ctx,
-		uploader: &info,
-		donec:    make(chan struct{}),
-	}, nil
+	return nil, errors.New("upload limit exceeded")
 }
 
 func (b *bucket) Delete(ctx context.Context, key string) error {
