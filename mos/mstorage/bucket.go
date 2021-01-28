@@ -41,6 +41,11 @@ func openBucket(ctx context.Context, conf clientConfig, bucketName string) (*buc
 	return &bucket{
 		name:          bucketName,
 		client:        minioClient,
+		limit: middleware.LimitMiddleware{
+			LimitUpload: 0,
+			AllSize:     0,
+			Use:         true,
+		},
 	}, nil
 }
 
@@ -55,7 +60,7 @@ func OpenBucket(ctx context.Context, conf clientConfig, bucketName string) error
 type bucket struct {
 	name string
 	client *minio.Client
-	mw middleware.Middlewares
+	limit middleware.LimitMiddleware
 }
 
 type writer struct {
@@ -126,9 +131,20 @@ func (b *bucket) NewRangeReader(ctx context.Context, key string, offset, length 
 
 func (b *bucket) NewTypedWriter(ctx context.Context, key string, contentType string, opts *driver.WriterOptions) (driver.Writer, error) {
 	r := bytes.NewReader(opts.ContentMD5)
-	allSize := b.mw.ResourceLimit(b.name, int64(opts.BufferSize))
-	b.mw.AllSize += allSize
-	if (opts.LimitSize < 1) || (allSize > opts.LimitSize) {
+	allSize := int64(opts.BufferSize)
+	b.limit.AllSize += allSize
+	if !middleware.Usable(&b.limit) {
+		info, err := b.client.PutObject(ctx, b.name, key, r, int64(opts.BufferSize), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+		if err != nil {
+			return nil, err
+		}
+		return &writer{
+			ctx:      ctx,
+			uploader: &info,
+			donec:    make(chan struct{}),
+		}, nil
+	}
+	if allSize > b.limit.LimitUpload {
 		info, err := b.client.PutObject(ctx, b.name, key, r, int64(opts.BufferSize), minio.PutObjectOptions{ContentType: "application/octet-stream"})
 		if err != nil {
 			return nil, err
