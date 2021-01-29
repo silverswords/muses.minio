@@ -10,7 +10,16 @@ type LimitMiddleware struct {
 	Use         bool
 }
 
+type AclMiddleware struct {
+	token string
+	Use bool
+}
+
 func (mw *LimitMiddleware) usable() bool {
+	return mw.Use
+}
+
+func (mw *AclMiddleware) usable() bool {
 	return mw.Use
 }
 
