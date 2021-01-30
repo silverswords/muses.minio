@@ -6,7 +6,7 @@ type number struct {
 	a, b int
 }
 
-func add(n *number) int {
+func add1(n *number) int {
 	return n.a + n.b
 }
 
@@ -15,8 +15,8 @@ type multiplier struct {
 	c int
 }
 
-func mul(m *multiplier) int {
-	sum := add(&m.n)
+func mul1(m *multiplier) int {
+	sum := add1(&m.n)
 	product := m.c * sum
 	return product
 }
@@ -25,11 +25,11 @@ type logger struct {
 	m multiplier
 }
 
-func log(l *logger) {
-	fmt.Println("result:", mul(&l.m))
+func log1(l *logger) {
+	fmt.Println("result:", mul1(&l.m))
 }
 
 func main() {
 	var l = logger{multiplier{number{2, 3}, 5}}
-	log(&l)
+	log1(&l)
 }
