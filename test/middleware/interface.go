@@ -5,14 +5,21 @@ import (
 	"fmt"
 )
 
+type Judge struct {
+	judge []bool
+}
+
 type Mul func(ctx context.Context, c interface{}) (response interface{}, err error)
 
 type Middleware func(Mul) Mul
 
-func Chain(outer Middleware, others ...Middleware) Middleware {
+func Chain(j Judge, outer Middleware, others ...Middleware) Middleware {
 	return func(next Mul) Mul {
 		for i := len(others) - 1; i >= 0; i-- {
-			next = others[i](next)
+			if j.judge[i] {
+				next = others[i](next)
+			}
+			break
 		}
 		return outer(next)
 	}
@@ -68,15 +75,18 @@ func log(l string) Middleware {
 }
 
 func main() {
+	var j Judge
+	j.judge[0] = true
+	j.judge[1] = true
 	a := &addNumber{a: 1, b: 3}
-	first := Chain(add(a), log("this is a messages for mul."))(mul)
+	first := Chain(j, add(a), log("this is a messages for mul."))(mul)
 	r, err := first(context.Background(), &mulNumber{9, 3})
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("mul result:", r)
 
-	second := Chain(add(a), log("this is a messages for sub."))(sub)
+	second := Chain(j, add(a), log("this is a messages for sub."))(sub)
 	u, err := second(context.Background(), &subNumber{3, 2})
 	if err != nil {
 		panic(err)
