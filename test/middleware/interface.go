@@ -21,7 +21,7 @@ func Chain(j Judge, outer Middleware, others ...Middleware) Middleware {
 			if j.judge[i] {
 				next = others[i](next)
 			} else {
-				break
+				continue
 			}
 		}
 		return outer(next)
@@ -80,16 +80,16 @@ func log(l string) Middleware {
 
 func main() {
 	var j Judge
-	j.judge = append(j.judge, true, true)
+	j.judge = append(j.judge, true, false, false)
 	a := &addNumber{a: 1, b: 3}
-	first := Chain(j, add(a), log("this is a messages for mul."))(mul)
+	first := Chain(j, log("this is a messages for mul."), log("111"), add(a))(mul)
 	r, err := first(context.Background(), &mulNumber{9, 3})
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("mul result:", r)
 
-	second := Chain(j, add(a), log("this is a messages for sub."))(sub)
+	second := Chain(j, log("this is a messages for sub."), log("222"), add(a))(sub)
 	u, err := second(context.Background(), &subNumber{3, 2})
 	if err != nil {
 		panic(err)
