@@ -14,12 +14,15 @@ type Mul func(ctx context.Context, c interface{}) (response interface{}, err err
 type Middleware func(Mul) Mul
 
 func Chain(j Judge, outer Middleware, others ...Middleware) Middleware {
+	fmt.Println(len(others), "length")
 	return func(next Mul) Mul {
 		for i := len(others) - 1; i >= 0; i-- {
+			fmt.Println(i, j.judge[i], "isTrue?")
 			if j.judge[i] {
 				next = others[i](next)
+			} else {
+				break
 			}
-			break
 		}
 		return outer(next)
 	}
@@ -55,6 +58,7 @@ func mul(ctx context.Context, mn interface{}) (interface{}, error) {
 
 func add(ad *addNumber) Middleware {
 	sum := ad.a + ad.b
+	fmt.Println("sum:", sum)
 	if sum > 10 {
 		return nil
 	}
@@ -76,8 +80,7 @@ func log(l string) Middleware {
 
 func main() {
 	var j Judge
-	j.judge[0] = true
-	j.judge[1] = true
+	j.judge = append(j.judge, true, true)
 	a := &addNumber{a: 1, b: 3}
 	first := Chain(j, add(a), log("this is a messages for mul."))(mul)
 	r, err := first(context.Background(), &mulNumber{9, 3})
