@@ -3,12 +3,13 @@ package driver
 import (
 	"context"
 	"github.com/minio/minio-go/v7"
+	"github.com/silverswords/muses.minio/bucketStorage"
 	"io"
 	"time"
 )
 
 type Bucket interface {
-	NewRangeReader(ctx context.Context, key string, opt *ReaderOptions) (Reader, error)
+	NewRangeReader(ctx context.Context, key string, opts ...bucketStorage.OtherGetObjectOption) (Reader, error)
 	NewTypedWriter(ctx context.Context, key string, opts *WriterOptions) (Writer, error)
 	Delete(ctx context.Context, key string, opts *RemoveOptions) error
 	SignedURL(ctx context.Context, key string, opts *SignedURLOptions) (string, error)
@@ -66,3 +67,4 @@ type ListPage struct {
 	Object []*ListObject
 	NextPageToken []byte
 }
+

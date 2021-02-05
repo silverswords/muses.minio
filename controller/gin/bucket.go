@@ -34,7 +34,7 @@ func (b *BucketController) RegisterRouter(r gin.IRouter) {
 		log.Fatal("[InitRouter]: server is nil")
 	}
 
-	err := bucketStorage.MakeBucket(b.bucket)
+	err := b.bucket.MakeBucket()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func (b *BucketController) upload(c *gin.Context) {
 	}
 
 	fileSize := req.File.Size
-	err = bucketStorage.PutObject(b.bucket, req.File.Filename, file, bucketStorage.WithObjectSize(fileSize))
+	err = b.bucket.PutObject(req.File.Filename, file, bucketStorage.WithObjectSize(fileSize))
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway,"error": err})
@@ -92,7 +92,7 @@ func (b *BucketController) delete(c *gin.Context) {
 	}
 
 	fmt.Println(req.ObjectName, "------objectName-----")
-	err = bucketStorage.RemoveObject(b.bucket, req.ObjectName)
+	err = b.bucket.RemoveObject(req.ObjectName)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
@@ -119,7 +119,7 @@ func (b *BucketController) download(c *gin.Context) {
 	//object, err := bucketStorage.GetObject(b.bucket, req.ObjectName)
 	reqParams := make(url.Values)
 	reqParams.Set("response-content-disposition", "attachment; filename=\"file\"")
-	u, err := bucketStorage.PresignedGetObject(b.bucket, req.ObjectName, time.Second*24*60*60, reqParams)
+	u, err := b.bucket.PresignedGetObject(req.ObjectName, time.Second*24*60*60, reqParams)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
@@ -144,7 +144,7 @@ func (b *BucketController) listObjects(c *gin.Context) {
 		return
 	}
 
-	ch := bucketStorage.ListObjects(b.bucket)
+	ch := b.bucket.ListObjects()
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})

@@ -8,18 +8,10 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/silverswords/muses.minio/mos/driver"
-	"github.com/silverswords/muses.minio/mos/middleware"
 	"io"
 	"net/http"
 	"net/url"
 )
-
-type clientConfig struct {
-	endpoint string
-	accessKeyID string
-	secretAccessKey string
-	useSSL bool
-}
 
 func openBucket(ctx context.Context, conf clientConfig, bucketName string) (*bucket, error) {
 	if bucketName == "" {
@@ -41,11 +33,6 @@ func openBucket(ctx context.Context, conf clientConfig, bucketName string) (*buc
 	return &bucket{
 		name:          bucketName,
 		client:        minioClient,
-		limit: middleware.LimitMiddleware{
-			LimitUpload: 0,
-			AllSize:     0,
-			Use:         true,
-		},
 	}, nil
 }
 
@@ -60,7 +47,6 @@ func OpenBucket(ctx context.Context, conf clientConfig, bucketName string) error
 type bucket struct {
 	name string
 	client *minio.Client
-	limit middleware.LimitMiddleware
 }
 
 type writer struct {
@@ -120,53 +106,33 @@ func (b *bucket) Close() error {
 	return nil
 }
 
-func (b *bucket) NewRangeReader(ctx context.Context, key string, offset, length int64, opt *driver.ReaderOptions) (driver.Reader, error) {
-	opts := minio.GetObjectOptions{}
-	object, err := b.client.GetObject(ctx, b.name, key, opts)
+func (b *bucket) NewRangeReader(ctx context.Context, key string, opt *driver.ReaderOptions) (driver.Reader, error) {
+	object, err := b.client.GetObject(ctx, b.name, key, opt.MinioGetOpts)
 	if err != nil {
 		return nil, err
 	}
 	return object, nil
 }
 
-func (b *bucket) NewTypedWriter(ctx context.Context, key string, contentType string, opts *driver.WriterOptions) (driver.Writer, error) {
+func (b *bucket) NewTypedWriter(ctx context.Context, key string, opts *driver.WriterOptions) (driver.Writer, error) {
 	r := bytes.NewReader(opts.ContentMD5)
-	allSize := int64(opts.BufferSize)
-	b.limit.AllSize += allSize
-	if !middleware.Usable(&b.limit) {
-		info, err := b.client.PutObject(ctx, b.name, key, r, int64(opts.BufferSize), minio.PutObjectOptions{ContentType: "application/octet-stream"})
-		if err != nil {
-			return nil, err
-		}
-		return &writer{
-			ctx:      ctx,
-			uploader: &info,
-			donec:    make(chan struct{}),
-		}, nil
+	info, err := b.client.PutObject(ctx, b.name, key, r, int64(opts.BufferSize), opts.MinioPutOpts)
+	if err != nil {
+		return nil, err
 	}
-	if allSize > b.limit.LimitUpload {
-		info, err := b.client.PutObject(ctx, b.name, key, r, int64(opts.BufferSize), minio.PutObjectOptions{ContentType: "application/octet-stream"})
-		if err != nil {
-			return nil, err
-		}
-		return &writer{
-			ctx:      ctx,
-			uploader: &info,
-			donec:    make(chan struct{}),
-		}, nil
-	}
-	return nil, errors.New("upload limit exceeded")
+	return &writer{
+		ctx:      ctx,
+		uploader: &info,
+		donec:    make(chan struct{}),
+	}, nil
 }
 
-func (b *bucket) Delete(ctx context.Context, key string) error {
-	opts := minio.RemoveObjectOptions {
-		GovernanceBypass: true,
-	}
-	err := b.client.RemoveObject(ctx, b.name, key, opts)
+func (b *bucket) Delete(ctx context.Context, key string, opts *driver.RemoveOptions) error {
+	err := b.client.RemoveObject(ctx, b.name, key, opts.MinioRemoveOpts)
 	return err
 }
 
-func (b *bucket) SignedURL(_ context.Context, key string, opts *driver.SignedURLOptions) (string, error) {
+func (b *bucket) SignedURL(ctx context.Context, key string, opts *driver.SignedURLOptions) (string, error) {
 	var u *url.URL
 	var err error
 	switch opts.Method {
@@ -193,9 +159,7 @@ func (b *bucket) listObjects(ctx context.Context, opts *driver.ListOptions) <- c
 
 	defer cancel()
 
-	objectCh := b.client.ListObjects(ctx, b.name, minio.ListObjectsOptions{
-		Recursive: true,
-	})
+	objectCh := b.client.ListObjects(ctx, b.name, opts.MinioListOpts)
 	for object := range objectCh {
 		if object.Err != nil {
 			fmt.Println(object.Err)
@@ -205,8 +169,7 @@ func (b *bucket) listObjects(ctx context.Context, opts *driver.ListOptions) <- c
 	return objectCh
 }
 
-func (b *bucket) ListPaged(ctx context.Context, opts *driver.ListOptions) (*driver.ListPage, error) {
-	//var object []*driver.ListObject
+func (b *bucket) ListPaged(ctx context.Context, opts *driver.ListOptions) (*driver.ListPage, error) { //var object []*driver.ListObject
 	_ = b.listObjects(ctx, opts)
 	page := driver.ListPage{}
 	return &page, nil

@@ -13,30 +13,30 @@ import (
 	"time"
 )
 
-type Storage interface {
-	Uploader
-	Downloader
-	Remover
-}
-
-type Uploader interface {
-	PutObject(objectName string, reader io.Reader, opts ...OtherPutObjectOption) error
-}
-
-type Downloader interface {
-	GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error)
-}
-
-type Remover interface {
-	RemoveObject(objectName string, opts ...OtherRemoveObjectOption) error
-}
+//type Storage interface {
+//	Uploader
+//	Downloader
+//	Remover
+//}
+//
+//type Uploader interface {
+//	PutObject(objectName string, reader io.Reader, opts ...OtherPutObjectOption) error
+//}
+//
+//type Downloader interface {
+//	GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error)
+//}
+//
+//type Remover interface {
+//	RemoveObject(objectName string, opts ...OtherRemoveObjectOption) error
+//}
 
 type Bucket struct {
 	client     Client
 	cacher     Cacher
 	bucketName string
 	ConfigInfo
-	MinioClient
+	mc MinioClient
 }
 
 func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
@@ -62,7 +62,7 @@ func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
 	}, nil
 }
 
-func MakeBucket(b *Bucket, opts ...OtherMakeBucketOption) error {
+func (b *Bucket) MakeBucket(opts ...OtherMakeBucketOption) error {
 	const (
 		defaultRegion        = "us-east-1"
 		defaultObjectLocking = false
@@ -85,8 +85,8 @@ func MakeBucket(b *Bucket, opts ...OtherMakeBucketOption) error {
 	return nil
 }
 
-func CheckBucket(b *Bucket) (bool, error) {
-	exists, err := b.CheckBucket(b.bucketName)
+func (b *Bucket) CheckBucket() (bool, error) {
+	exists, err := b.mc.CheckBucket(b.bucketName)
 	if err != nil {
 		return false, err
 	}
@@ -94,8 +94,8 @@ func CheckBucket(b *Bucket) (bool, error) {
 	return exists, nil
 }
 
-func ListedBucket(b *Bucket) ([]minio.BucketInfo, error) {
-	bucketInfos, err := b.ListBuckets()
+func (b *Bucket) ListedBucket() ([]minio.BucketInfo, error) {
+	bucketInfos, err := b.mc.ListBuckets()
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +103,8 @@ func ListedBucket(b *Bucket) ([]minio.BucketInfo, error) {
 	return bucketInfos, nil
 }
 
-func RemoveBucket(b *Bucket) error {
-	err := b.RemoveBucket(b.bucketName)
+func (b *Bucket) RemoveBucket() error {
+	err := b.mc.RemoveBucket(b.bucketName)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func RemoveBucket(b *Bucket) error {
 	return nil
 }
 
-func SetBucketVersioning(b *Bucket, opts ...OtherSetBucketVersioningOption) error {
+func (b *Bucket) SetBucketVersioning(opts ...OtherSetBucketVersioningOption) error {
 	const (
 		defaultStatus = "Enabled"
 	)
@@ -125,7 +125,7 @@ func SetBucketVersioning(b *Bucket, opts ...OtherSetBucketVersioningOption) erro
 		opt(o)
 	}
 
-	err := b.SetBucketVersioning(b.bucketName, o)
+	err := b.mc.SetBucketVersioning(b.bucketName, o)
 	if err != nil {
 		return err
 	}
@@ -133,8 +133,8 @@ func SetBucketVersioning(b *Bucket, opts ...OtherSetBucketVersioningOption) erro
 	return nil
 }
 
-func GetBucketVersioning(b *Bucket) (minio.BucketVersioningConfiguration, error) {
-	configuration, err := b.GetBucketVersioning(b.bucketName)
+func (b *Bucket) GetBucketVersioning() (minio.BucketVersioningConfiguration, error) {
+	configuration, err := b.mc.GetBucketVersioning(b.bucketName)
 	if err != nil {
 		return configuration, err
 	}
@@ -142,8 +142,8 @@ func GetBucketVersioning(b *Bucket) (minio.BucketVersioningConfiguration, error)
 	return configuration, nil
 }
 
-func SetBucketReplication(b *Bucket, cfg replication.Config) error {
-	err := b.SetBucketReplication(b.bucketName, cfg)
+func (b *Bucket) SetBucketReplication(cfg replication.Config) error {
+	err := b.mc.SetBucketReplication(b.bucketName, cfg)
 	if err != nil {
 		return err
 	}
@@ -151,8 +151,8 @@ func SetBucketReplication(b *Bucket, cfg replication.Config) error {
 	return nil
 }
 
-func GetBucketReplication(b *Bucket) (replication.Config, error) {
-	cfg, err := b.GetBucketReplication(b.bucketName)
+func (b *Bucket) GetBucketReplication() (replication.Config, error) {
+	cfg, err := b.mc.GetBucketReplication(b.bucketName)
 	if err != nil {
 		return cfg, err
 	}
@@ -160,8 +160,8 @@ func GetBucketReplication(b *Bucket) (replication.Config, error) {
 	return cfg, nil
 }
 
-func RemoveBucketReplication(b *Bucket) error {
-	err := b.RemoveBucketReplication(b.bucketName)
+func (b *Bucket) RemoveBucketReplication() error {
+	err := b.mc.RemoveBucketReplication(b.bucketName)
 	if err != nil {
 		return err
 	}
@@ -169,8 +169,8 @@ func RemoveBucketReplication(b *Bucket) error {
 	return nil
 }
 
-func SetBucketPolicy(b *Bucket, policy string) error {
-	err := b.SetBucketPolicy(b.bucketName, policy)
+func (b *Bucket) SetBucketPolicy(policy string) error {
+	err := b.mc.SetBucketPolicy(b.bucketName, policy)
 	if err != nil {
 		return err
 	}
@@ -178,8 +178,8 @@ func SetBucketPolicy(b *Bucket, policy string) error {
 	return nil
 }
 
-func GetBucketPolicy(b *Bucket) (string, error) {
-	policy, err := b.GetBucketPolicy(b.bucketName)
+func (b *Bucket) GetBucketPolicy() (string, error) {
+	policy, err := b.mc.GetBucketPolicy(b.bucketName)
 	if err != nil {
 		return "", err
 	}
@@ -187,8 +187,8 @@ func GetBucketPolicy(b *Bucket) (string, error) {
 	return policy, nil
 }
 
-func SetObjectLockConfig(b *Bucket, mode string, validity *uint, uint string) error {
-	err := b.SetObjectLockConfig(b.bucketName, mode, validity, uint)
+func (b *Bucket) SetObjectLockConfig(mode string, validity *uint, uint string) error {
+	err := b.mc.SetObjectLockConfig(b.bucketName, mode, validity, uint)
 	if err != nil {
 		return err
 	}
@@ -196,8 +196,8 @@ func SetObjectLockConfig(b *Bucket, mode string, validity *uint, uint string) er
 	return nil
 }
 
-func GetObjectLockConfig(b *Bucket) (string, string, *uint, string, error) {
-	objectLock, mode, validity, uint, err := b.GetObjectLockConfig(b.bucketName)
+func (b *Bucket) GetObjectLockConfig() (string, string, *uint, string, error) {
+	objectLock, mode, validity, uint, err := b.mc.GetObjectLockConfig(b.bucketName)
 	if err != nil {
 		return "", "", nil, "", err
 	}
@@ -205,7 +205,7 @@ func GetObjectLockConfig(b *Bucket) (string, string, *uint, string, error) {
 	return objectLock, mode, validity, uint, nil
 }
 
-func PutObject(b *Bucket, objectName string, reader io.Reader, opts ...OtherPutObjectOption) error {
+func (b *Bucket) PutObject(objectName string, reader io.Reader, opts ...OtherPutObjectOption) error {
 	var buf bytes.Buffer
 
 	var e encrypt.ServerSide
@@ -247,8 +247,8 @@ func PutObject(b *Bucket, objectName string, reader io.Reader, opts ...OtherPutO
 	return nil
 }
 
-func PresignedPutObject(b *Bucket, ctx context.Context, objectName string, expires time.Duration) (*url.URL, error) {
-	url, err := b.PresignedPutObject(b.bucketName, objectName, expires)
+func (b *Bucket) PresignedPutObject(ctx context.Context, objectName string, expires time.Duration) (*url.URL, error) {
+	url, err := b.mc.PresignedPutObject(b.bucketName, objectName, expires)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func PresignedPutObject(b *Bucket, ctx context.Context, objectName string, expir
 	return url, nil
 }
 
-func GetObject(b *Bucket, objectName string, opts ...OtherGetObjectOption) ([]byte, error) {
+func (b *Bucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error) {
 	var buf []byte
 	var e encrypt.ServerSide
 	o := &GetObjectOptions{
@@ -285,7 +285,7 @@ func GetObject(b *Bucket, objectName string, opts ...OtherGetObjectOption) ([]by
 	return buf, nil
 }
 
-func PresignedGetObject(b *Bucket, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
+func (b *Bucket) PresignedGetObject(objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
 	url, err := b.client.PresignedGetObject(b.bucketName, objectName, expires, reqParams)
 	if err != nil {
 		return nil, err
@@ -294,7 +294,7 @@ func PresignedGetObject(b *Bucket, objectName string, expires time.Duration, req
 	return url, nil
 }
 
-func RemoveObject(b *Bucket, objectName string, opts ...OtherRemoveObjectOption) error {
+func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption) error {
 	const (
 		defaultGovernanceBypass = false
 	)
@@ -322,7 +322,7 @@ func RemoveObject(b *Bucket, objectName string, opts ...OtherRemoveObjectOption)
 	return nil
 }
 
-func ListObjects(b *Bucket, opts ...OtherListObjectsOption) <-chan minio.ObjectInfo {
+func (b *Bucket) ListObjects(opts ...OtherListObjectsOption) <-chan minio.ObjectInfo {
 	const (
 		defaultPrefix = ""
 	)
