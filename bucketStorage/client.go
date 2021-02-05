@@ -8,6 +8,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/minio/minio-go/v7/pkg/replication"
+	"github.com/silverswords/muses.minio/bucketStorage/driver"
 	"github.com/spf13/viper"
 	"io"
 	"net/url"
@@ -16,10 +17,9 @@ import (
 
 type Client interface {
 	MakeBucket(bucketName string, o *MakeBucketOptions) error
-	PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error
-	GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error)
-	PresignedGetObject(bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error)
-	RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error
+	PutObject(ctx context.Context, bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error
+	GetObject(bucketName string, objectName string, o *GetObjectOptions) (driver.Reader, error)
+	RemoveObject(ctx context.Context, bucketName string, objectName string, o *RemoveObjectOptions) error
 	ListObjects(bucketName string, o *ListObjectsOptions) <-chan minio.ObjectInfo
 }
 
@@ -203,32 +203,32 @@ func (m *MinioClient) GetObjectLockConfig(bucketName string) (string, string, *u
 	return objectLock, mr, validity, u, nil
 }
 
-func (m *MinioClient) PutObject(bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error {
-	_, err := m.mc.PutObject(context.Background(), bucketName, objectName, reader, o.ObjectSize, minio.PutObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
+func (m *MinioClient) PutObject(ctx context.Context, bucketName string, objectName string, reader io.Reader, o *OtherPutObjectOptions) error {
+	_, err := m.mc.PutObject(ctx, bucketName, objectName, reader, o.ObjectSize, minio.PutObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *MinioClient) GetObject(bucketName string, objectName string, o *GetObjectOptions) ([]byte, error) {
+func (m *MinioClient) GetObject(bucketName string, objectName string, o *GetObjectOptions) (driver.Reader, error) {
 	minioObject, err := m.mc.GetObject(context.Background(), bucketName, objectName, minio.GetObjectOptions{ServerSideEncryption: o.ServerSideEncryption})
 	if err != nil {
 		return nil, err
 	}
 
-	stat, err := minioObject.Stat()
-	buf := make([]byte, stat.Size)
-	_, err = io.ReadFull(minioObject, buf)
-	if err != nil {
-		return nil, err
-	}
+	//stat, err := minioObject.Stat()
+	//buf := make([]byte, stat.Size)
+	//_, err = io.ReadFull(minioObject, buf)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	return buf, nil
+	return minioObject, nil
 }
 
-func (m *MinioClient) RemoveObject(bucketName string, objectName string, o *RemoveObjectOptions) error {
-	err := m.mc.RemoveObject(context.Background(), bucketName, objectName, minio.RemoveObjectOptions{GovernanceBypass: o.GovernanceBypass})
+func (m *MinioClient) RemoveObject(ctx context.Context, bucketName string, objectName string, o *RemoveObjectOptions) error {
+	err := m.mc.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{GovernanceBypass: o.GovernanceBypass})
 	if err != nil {
 		return err
 	}
@@ -236,8 +236,8 @@ func (m *MinioClient) RemoveObject(bucketName string, objectName string, o *Remo
 	return nil
 }
 
-func (m *MinioClient) PresignedPutObject(bucketName string, objectName string, expires time.Duration) (*url.URL, error) {
-	u, err := m.mc.PresignedPutObject(context.Background(), bucketName, objectName, expires)
+func (m *MinioClient) PresignedPutObject(ctx context.Context, bucketName string, objectName string, expires time.Duration) (*url.URL, error) {
+	u, err := m.mc.PresignedPutObject(ctx, bucketName, objectName, expires)
 	if err != nil {
 		return nil, err
 	}
@@ -245,8 +245,8 @@ func (m *MinioClient) PresignedPutObject(bucketName string, objectName string, e
 	return u, nil
 }
 
-func (m *MinioClient) PresignedGetObject(bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
-	u, err := m.mc.PresignedGetObject(context.Background(), bucketName, objectName, expires, reqParams)
+func (m *MinioClient) PresignedGetObject(ctx context.Context, bucketName string, objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
+	u, err := m.mc.PresignedGetObject(ctx, bucketName, objectName, expires, reqParams)
 	if err != nil {
 		return nil, err
 	}

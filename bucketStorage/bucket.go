@@ -7,29 +7,12 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/minio/minio-go/v7/pkg/replication"
-	"io"
+	"github.com/silverswords/muses.minio/bucketStorage/driver"
 	"log"
+	"net/http"
 	"net/url"
 	"time"
 )
-
-//type Storage interface {
-//	Uploader
-//	Downloader
-//	Remover
-//}
-//
-//type Uploader interface {
-//	PutObject(objectName string, reader io.Reader, opts ...OtherPutObjectOption) error
-//}
-//
-//type Downloader interface {
-//	GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error)
-//}
-//
-//type Remover interface {
-//	RemoveObject(objectName string, opts ...OtherRemoveObjectOption) error
-//}
 
 type Bucket struct {
 	client     Client
@@ -205,7 +188,7 @@ func (b *Bucket) GetObjectLockConfig() (string, string, *uint, string, error) {
 	return objectLock, mode, validity, uint, nil
 }
 
-func (b *Bucket) PutObject(objectName string, reader io.Reader, opts ...OtherPutObjectOption) error {
+func (b *Bucket) NewTypedWriter(ctx context.Context, key string, opts ...OtherPutObjectOption) (driver.Writer, error) {
 	var buf bytes.Buffer
 
 	var e encrypt.ServerSide
@@ -224,40 +207,41 @@ func (b *Bucket) PutObject(objectName string, reader io.Reader, opts ...OtherPut
 		opt(o)
 	}
 
-	cacheBytes := make([]byte, o.ObjectSize)
-
-	teeReader := io.TeeReader(reader, &buf)
-	_, err := teeReader.Read(cacheBytes)
-	if err != nil {
-		return err
-	}
-
-	err = b.client.PutObject(b.bucketName, objectName, &buf, o)
-	if err != nil {
-		return err
-	}
-
-	if b.cacher != nil {
-		err = b.cacher.PutObject(objectName, cacheBytes)
-		if err != nil {
-			log.Println("cache putObject:", err)
-		}
-	}
-
-	return nil
-}
-
-func (b *Bucket) PresignedPutObject(ctx context.Context, objectName string, expires time.Duration) (*url.URL, error) {
-	url, err := b.mc.PresignedPutObject(b.bucketName, objectName, expires)
+	err := b.client.PutObject(ctx, b.bucketName, key, &buf, o)
 	if err != nil {
 		return nil, err
 	}
 
-	return url, nil
+	return nil, nil
 }
 
-func (b *Bucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]byte, error) {
-	var buf []byte
+func (b *Bucket) SignedURL(ctx context.Context, key string, expires time.Duration, Method string) (string, error) {
+	var u *url.URL
+	var err error
+	switch Method {
+	case http.MethodGet:
+		reqParams := make(url.Values)
+		reqParams.Set("response-content-disposition", "attachment; filename=\"file\"")
+		u, err = b.mc.PresignedGetObject(ctx, b.bucketName, key, expires, reqParams)
+		if err != nil {
+			return "", err
+		}
+	case http.MethodPut:
+		u, err = b.mc.PresignedPutObject(ctx, b.bucketName, key, expires)
+		if err != nil {
+			return "", err
+		}
+	default:
+		return "", fmt.Errorf("unsupported Method #{opts.Method}")
+	}
+	if err != nil {
+		return "", err
+	}
+
+	return u.Path, nil
+}
+
+func (b *Bucket) NewRangeReader(ctx context.Context, key string, opts ...OtherGetObjectOption) (driver.Reader, error) {
 	var e encrypt.ServerSide
 	o := &GetObjectOptions{
 		e,
@@ -267,34 +251,15 @@ func (b *Bucket) GetObject(objectName string, opts ...OtherGetObjectOption) ([]b
 		opt(o)
 	}
 
-	if b.cacher != nil {
-		buf, err := b.cacher.GetObject(objectName)
-		if err != nil {
-			log.Println("cache getObject:", err)
-		}
-		if buf != nil {
-			return buf, nil
-		}
-	}
-
-	buf, err := b.client.GetObject(b.bucketName, objectName, o)
+	object, err := b.client.GetObject(b.bucketName, key, o)
 	if err != nil {
 		return nil, err
 	}
 
-	return buf, nil
+	return object, nil
 }
 
-func (b *Bucket) PresignedGetObject(objectName string, expires time.Duration, reqParams url.Values) (*url.URL, error) {
-	url, err := b.client.PresignedGetObject(b.bucketName, objectName, expires, reqParams)
-	if err != nil {
-		return nil, err
-	}
-
-	return url, nil
-}
-
-func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption) error {
+func (b *Bucket) Delete(ctx context.Context, key string, opts ...OtherRemoveObjectOption) error {
 	const (
 		defaultGovernanceBypass = false
 	)
@@ -307,16 +272,9 @@ func (b *Bucket) RemoveObject(objectName string, opts ...OtherRemoveObjectOption
 		opt(o)
 	}
 
-	err := b.client.RemoveObject(b.bucketName, objectName, o)
+	err := b.client.RemoveObject(ctx, b.bucketName, key, o)
 	if err != nil {
 		return err
-	}
-
-	if b.cacher != nil {
-		err = b.cacher.RemoveObject(objectName)
-		if err != nil {
-			log.Println("cache removeObject:", err)
-		}
 	}
 
 	return nil
@@ -338,4 +296,8 @@ func (b *Bucket) ListObjects(opts ...OtherListObjectsOption) <-chan minio.Object
 	objectInfo := b.client.ListObjects(b.bucketName, o)
 
 	return objectInfo
+}
+
+func (b *Bucket) Close() error {
+	return nil
 }

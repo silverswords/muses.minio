@@ -139,12 +139,12 @@ func (b *bucket) SignedURL(ctx context.Context, key string, opts *driver.SignedU
 	case http.MethodGet:
 		reqParams := make(url.Values)
 		reqParams.Set("response-content-disposition", "attachment; filename=\"file\"")
-		u, err = b.client.PresignedGetObject(context.Background(), b.name, key, opts.Expiry, reqParams)
+		u, err = b.client.PresignedGetObject(ctx, b.name, key, opts.Expiry, reqParams)
 		if err != nil {
 			return "", err
 		}
 	case http.MethodPut:
-		u, err = b.client.PresignedPutObject(context.Background(), b.name, key, opts.Expiry)
+		u, err = b.client.PresignedPutObject(ctx, b.name, key, opts.Expiry)
 		if err != nil {
 			return "", err
 		}
