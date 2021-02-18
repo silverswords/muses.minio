@@ -6,13 +6,14 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/silverswords/muses.minio/bucketStorage"
+	"github.com/silverswords/muses.minio/bucketStorage/driver"
 	"log"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -67,7 +68,7 @@ func (b *BucketController) upload(c *gin.Context) {
 	}
 
 	fileSize := req.File.Size
-	err = b.bucket.PutObject(req.File.Filename, file, bucketStorage.WithObjectSize(fileSize))
+	_, err = b.bucket.NewTypedWriter(context.Background(), req.File.Filename, file, driver.WithObjectSize(fileSize))
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway,"error": err})
@@ -92,7 +93,7 @@ func (b *BucketController) delete(c *gin.Context) {
 	}
 
 	fmt.Println(req.ObjectName, "------objectName-----")
-	err = b.bucket.RemoveObject(req.ObjectName)
+	err = b.bucket.Delete(context.Background(), req.ObjectName)
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})
@@ -116,10 +117,7 @@ func (b *BucketController) download(c *gin.Context) {
 		return
 	}
 
-	//object, err := bucketStorage.GetObject(b.bucket, req.ObjectName)
-	reqParams := make(url.Values)
-	reqParams.Set("response-content-disposition", "attachment; filename=\"file\"")
-	u, err := b.bucket.PresignedGetObject(req.ObjectName, time.Second*24*60*60, reqParams)
+	u, err := b.bucket.SignedURL(context.Background(), req.ObjectName, time.Second*24*60*60, "GET")
 	if err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway})

@@ -1,4 +1,4 @@
-package bucketStorage
+package driver
 
 import (
 	"encoding/xml"
@@ -94,13 +94,13 @@ func WithGovernaceBypass(GovernaceBypass bool) OtherRemoveObjectOption {
 }
 
 type ListObjectsOptions struct {
-	prefix string
+	Prefix string
 }
 
 type OtherListObjectsOption func(o *ListObjectsOptions)
 
 func WithPrefix(prefix string) OtherListObjectsOption {
 	return func(o *ListObjectsOptions) {
-		o.prefix = prefix
+		o.Prefix = prefix
 	}
 }

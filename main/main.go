@@ -19,5 +19,5 @@ func main() {
 	con := object.New(bucket)
 	con.RegisterRouter(router.Group("/api/v1/object"))
 
-	_ = router.Run(":8000")
+	_ = router.Run(":8001")
 }

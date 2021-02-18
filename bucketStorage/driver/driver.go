@@ -2,15 +2,14 @@ package driver
 
 import (
 	"context"
-	"github.com/silverswords/muses.minio/bucketStorage"
 	"io"
 	"time"
 )
 
 type Bucket interface {
-	NewRangeReader(ctx context.Context, key string, opts ...bucketStorage.OtherGetObjectOption) (Reader, error)
-	NewTypedWriter(ctx context.Context, key string, opts ...bucketStorage.OtherPutObjectOption) (Writer, error)
-	Delete(ctx context.Context, key string, opts ...bucketStorage.OtherRemoveObjectOption) error
+	NewRangeReader(ctx context.Context, key string, opts ...OtherGetObjectOption) (Reader, error)
+	NewTypedWriter(ctx context.Context, key string, reader io.Reader, opts ...OtherPutObjectOption) (Writer, error)
+	Delete(ctx context.Context, key string, opts ...OtherRemoveObjectOption) error
 	SignedURL(ctx context.Context, key string, expires time.Duration, Method string) (string, error)
 	Close() error
 }

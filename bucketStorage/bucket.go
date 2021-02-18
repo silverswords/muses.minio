@@ -1,13 +1,13 @@
 package bucketStorage
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/minio/minio-go/v7/pkg/replication"
 	"github.com/silverswords/muses.minio/bucketStorage/driver"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -45,13 +45,13 @@ func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
 	}, nil
 }
 
-func (b *Bucket) MakeBucket(opts ...OtherMakeBucketOption) error {
+func (b *Bucket) MakeBucket(opts ...driver.OtherMakeBucketOption) error {
 	const (
 		defaultRegion        = "us-east-1"
 		defaultObjectLocking = false
 	)
 
-	o := &MakeBucketOptions{
+	o := &driver.MakeBucketOptions{
 		Region:        defaultRegion,
 		ObjectLocking: defaultObjectLocking,
 	}
@@ -95,12 +95,12 @@ func (b *Bucket) RemoveBucket() error {
 	return nil
 }
 
-func (b *Bucket) SetBucketVersioning(opts ...OtherSetBucketVersioningOption) error {
+func (b *Bucket) SetBucketVersioning(opts ...driver.OtherSetBucketVersioningOption) error {
 	const (
 		defaultStatus = "Enabled"
 	)
 
-	o := &SetBucketVersioningOptions{
+	o := &driver.SetBucketVersioningOptions{
 		Status: defaultStatus,
 	}
 
@@ -188,9 +188,7 @@ func (b *Bucket) GetObjectLockConfig() (string, string, *uint, string, error) {
 	return objectLock, mode, validity, uint, nil
 }
 
-func (b *Bucket) NewTypedWriter(ctx context.Context, key string, opts ...OtherPutObjectOption) (driver.Writer, error) {
-	var buf bytes.Buffer
-
+func (b *Bucket) NewTypedWriter(ctx context.Context, key string, reader io.Reader, opts ...driver.OtherPutObjectOption) (driver.Writer, error) {
 	var e encrypt.ServerSide
 	var d = int64(1024)
 	var (
@@ -198,7 +196,7 @@ func (b *Bucket) NewTypedWriter(ctx context.Context, key string, opts ...OtherPu
 		defaultObjectSize = d
 	)
 
-	o := &OtherPutObjectOptions{
+	o := &driver.OtherPutObjectOptions{
 		defaultServerSideEncryption,
 		defaultObjectSize,
 	}
@@ -207,7 +205,7 @@ func (b *Bucket) NewTypedWriter(ctx context.Context, key string, opts ...OtherPu
 		opt(o)
 	}
 
-	err := b.client.PutObject(ctx, b.bucketName, key, &buf, o)
+	err := b.client.PutObject(ctx, b.bucketName, key, reader, o)
 	if err != nil {
 		return nil, err
 	}
@@ -220,12 +218,11 @@ func (b *Bucket) SignedURL(ctx context.Context, key string, expires time.Duratio
 	var err error
 	switch Method {
 	case http.MethodGet:
-		reqParams := make(url.Values)
-		reqParams.Set("response-content-disposition", "attachment; filename=\"file\"")
-		u, err = b.mc.PresignedGetObject(ctx, b.bucketName, key, expires, reqParams)
+		u, err = b.client.PresignedGetObject(ctx, b.bucketName, key, expires)
 		if err != nil {
 			return "", err
 		}
+		fmt.Println("url", &u)
 	case http.MethodPut:
 		u, err = b.mc.PresignedPutObject(ctx, b.bucketName, key, expires)
 		if err != nil {
@@ -241,9 +238,9 @@ func (b *Bucket) SignedURL(ctx context.Context, key string, expires time.Duratio
 	return u.Path, nil
 }
 
-func (b *Bucket) NewRangeReader(ctx context.Context, key string, opts ...OtherGetObjectOption) (driver.Reader, error) {
+func (b *Bucket) NewRangeReader(ctx context.Context, key string, opts ...driver.OtherGetObjectOption) (driver.Reader, error) {
 	var e encrypt.ServerSide
-	o := &GetObjectOptions{
+	o := &driver.GetObjectOptions{
 		e,
 	}
 
@@ -259,12 +256,12 @@ func (b *Bucket) NewRangeReader(ctx context.Context, key string, opts ...OtherGe
 	return object, nil
 }
 
-func (b *Bucket) Delete(ctx context.Context, key string, opts ...OtherRemoveObjectOption) error {
+func (b *Bucket) Delete(ctx context.Context, key string, opts ...driver.OtherRemoveObjectOption) error {
 	const (
 		defaultGovernanceBypass = false
 	)
 
-	o := &RemoveObjectOptions{
+	o := &driver.RemoveObjectOptions{
 		GovernanceBypass: defaultGovernanceBypass,
 	}
 
@@ -280,13 +277,13 @@ func (b *Bucket) Delete(ctx context.Context, key string, opts ...OtherRemoveObje
 	return nil
 }
 
-func (b *Bucket) ListObjects(opts ...OtherListObjectsOption) <-chan minio.ObjectInfo {
+func (b *Bucket) ListObjects(opts ...driver.OtherListObjectsOption) <-chan minio.ObjectInfo {
 	const (
 		defaultPrefix = ""
 	)
 
-	o := &ListObjectsOptions{
-		prefix: defaultPrefix,
+	o := &driver.ListObjectsOptions{
+		Prefix: defaultPrefix,
 	}
 
 	for _, opt := range opts {
