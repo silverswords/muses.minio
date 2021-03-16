@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 )
 
@@ -20,9 +21,11 @@ type Bucket struct {
 	bucketName string
 	ConfigInfo
 	mc MinioClient
+	uploadTimeOut time.Duration
+	maxUploadWorkers int
 }
 
-func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
+func NewBucket(bucketName, configName, configPath string, uploadTimeOut time.Duration, maxUploadWorkers int) (*Bucket, error) {
 	c, err := initClient(configName, configPath)
 	if err != nil {
 		return nil, err
@@ -42,6 +45,8 @@ func NewBucket(bucketName, configName, configPath string) (*Bucket, error) {
 			configName,
 			configPath,
 		},
+		uploadTimeOut: uploadTimeOut,
+		maxUploadWorkers: maxUploadWorkers,
 	}, nil
 }
 
@@ -188,7 +193,28 @@ func (b *Bucket) GetObjectLockConfig() (string, string, *uint, string, error) {
 	return objectLock, mode, validity, uint, nil
 }
 
-func (b *Bucket) NewTypedWriter(ctx context.Context, key string, reader io.Reader, opts ...driver.OtherPutObjectOption) (driver.Writer, error) {
+type ObjectUpload struct {
+	Key string
+	Object io.Reader
+}
+
+type UploadError struct {
+	Key string
+	Error error
+}
+
+type UploadResult struct {
+	Key string
+}
+
+func (b *Bucket) countNeededWorkers(objectsCount int) int {
+	if b.maxUploadWorkers > objectsCount {
+		return objectsCount
+	}
+	 return b.maxUploadWorkers
+}
+
+func (b *Bucket) NewTypedWriter(ctx context.Context, objectsCount int, objectChannel chan ObjectUpload, opts ...driver.OtherPutObjectOption) (driver.Writer, error) {
 	var e encrypt.ServerSide
 	var d = int64(1024)
 	var (
@@ -204,11 +230,46 @@ func (b *Bucket) NewTypedWriter(ctx context.Context, key string, reader io.Reade
 	for _, opt := range opts {
 		opt(o)
 	}
+	
+	errorsCh := make(chan *UploadError, objectsCount)
 
-	err := b.client.PutObject(ctx, b.bucketName, key, reader, o)
-	if err != nil {
-		return nil, err
+	contextWithTimeout, cancel := context.WithTimeout(ctx, b.uploadTimeOut)
+	defer cancel()
+
+	workersCount := b.countNeededWorkers(objectsCount)
+
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(workersCount)
+	for i := 0; i < workersCount; i++ {
+		go func() {
+			defer waitGroup.Done()
+			for {
+				select {
+				case <-contextWithTimeout.Done():
+					return
+				default:
+				}
+
+				select {
+				case upload, ok := <-objectChannel:
+					if !ok {
+						return
+					}
+					err := b.client.PutObject(ctx, b.bucketName, upload.Key, upload.Object, o)
+					if err != nil {
+						errorsCh <- &UploadError{
+							upload.Key,
+							err,
+						}
+					}
+				default:
+				}
+			}
+		}()
 	}
+
+	waitGroup.Wait()
+	close(errorsCh)
 
 	return nil, nil
 }
