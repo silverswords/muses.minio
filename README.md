@@ -1,4 +1,5 @@
 # muses.minio
+![](https://img.shields.io/github/release/silverswords/muses.minio.svg)
 
 A private cloud storage solution based on Minio.
 
