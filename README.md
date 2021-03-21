@@ -1,91 +1,59 @@
 # muses.minio
 
-One Paragraph of project description goes here
+A private cloud storage solution based on Minio.
 
-## Getting Started
+## Basic Features
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+The most basic features is to upload, download, and delete unstructured data objects. Users or clients can directly access these feactures through HTTP requests, and also support batch upload, download and delete.
 
-### Prerequisites
+### Middleware
 
-What things you need to install the software and how to install them
+The middleware mode designed here is for pluggable add new features. 
+Middleware is based on the realization of basic features, adding some additional features, such as access control, batch request processing, access frequency limit, etc.
+The reason for using the middleware mode is to realize that the new functions and basic functions do not interfere with each other, and each perform its own duties. Whether the new functions are used supports dynamic adjustment.
 
-```
-Give examples
-```
-
-### Installing
-
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
+``` go
+func Chain(j Judge, mw ...Middleware) Middleware {
+	var arr = make([]bool, len(j))
+	for _, value := range j {
+		arr = append(arr, value)
+	}
+	return func(next Handler) Handler {
+		for i := len(mw) - 1; i >= 0; i-- {
+			if arr[i] {
+				next = mw[i](next)
+			} else {
+				continue
+			}
+		}
+		return next
+	}
+}
 ```
 
-### And coding style tests
+### New Features
 
-Explain what these tests test and why
+- Current Limit: Record the total data size currently stored, and refuse to upload when the stored data size exceeds the threshold.
 
-```
-Give an example
-```
+- MD5 Checkout: Check whether the uploaded object is complete. If the uploaded object is incomplete, request a re-upload. If it is incomplete for multiple times, it will return upload failure.
+
+- Notification: Meet the needs of users who want to subscribe to the dynamic information of a certain object.
+
+- Batch: Temporarily store user batch upload and download requests and process them in order.
+
+- ACL: Determine whether the user has the permission to upload, download or delete according to the token that the user carries when sending the request.
+
+- ObjectLock: Used to lock objects, which can only be used by the uploader for objects uploaded by themselves.
 
 ## Deployment
 
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
-
-## Authors
-
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
-
+Deploy a minio cluster through k8s, and each cluster allows multiple tenants to be deployed. After deployment, we can expand the storage capacity by adding a new pool for each tenant.
 
 ## Architecture
 ![image](https://github.com/silverswords/muses.minio/blob/master/assets/bucket-architecture.png)
+
+## Reference
+
+- [Operator](https://docs.min.io/minio/k8s/reference/minio-operator-reference.html#minio-kubernetes-operator)
+
+- [Expand tenant](https://docs.min.io/minio/k8s/reference/minio-kubectl-plugin.html#expand-a-minio-tenant)
