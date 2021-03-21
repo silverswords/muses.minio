@@ -230,7 +230,7 @@ func (b *Bucket) NewTypedWriter(ctx context.Context, objectsCount int, objectCha
 	for _, opt := range opts {
 		opt(o)
 	}
-	
+
 	errorsCh := make(chan *UploadError, objectsCount)
 
 	contextWithTimeout, cancel := context.WithTimeout(ctx, b.uploadTimeOut)
