@@ -8,13 +8,13 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/silverswords/muses.minio/bucketStorage"
-	"github.com/silverswords/muses.minio/bucketStorage/driver"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/silverswords/muses.minio/bucketStorage"
 )
 
 // BucketController -
@@ -49,7 +49,9 @@ func (b *BucketController) RegisterRouter(r gin.IRouter) {
 func (b *BucketController) upload(c *gin.Context) {
 	var (
 		req struct {
-			File multipart.FileHeader `json:"file"       binding:"required"`
+			Key         []string               `json:"key" binding:"required"`
+			ObjectCount int                    `json:"count"       binding:"required"`
+			File        []multipart.FileHeader `json:"file"       binding:"required"`
 		}
 	)
 
@@ -60,18 +62,24 @@ func (b *BucketController) upload(c *gin.Context) {
 		return
 	}
 
-	file, err := req.File.Open()
-	if err != nil {
-		c.Error(err)
-		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway,"error": err})
-		return
+	var uploadChan chan *bucketStorage.ObjectUpload
+	for i := 0; i < req.ObjectCount; i++ {
+		key := req.Key[i]
+		file, err := req.File[i].Open()
+		if err != nil {
+			c.Error(err)
+			c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway, "error": err})
+			return
+		}
+
+		uploadChan <- &bucketStorage.ObjectUpload{Key: key, Object: file}
 	}
 
-	fileSize := req.File.Size
-	_, err = b.bucket.NewTypedWriter(context.Background(), req.File.Filename, file, driver.WithObjectSize(fileSize))
+	// fileSize := req.File.Size
+	_, err = b.bucket.NewTypedWriter(context.Background(), req.ObjectCount, uploadChan)
 	if err != nil {
 		c.Error(err)
-		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway,"error": err})
+		c.JSON(http.StatusBadGateway, gin.H{"status": http.StatusBadGateway, "error": err})
 		return
 	}
 
@@ -81,7 +89,7 @@ func (b *BucketController) upload(c *gin.Context) {
 func (b *BucketController) delete(c *gin.Context) {
 	var (
 		req struct {
-			ObjectName  string `json:"objectName"      binding:"required"`
+			ObjectName string `json:"objectName"      binding:"required"`
 		}
 	)
 

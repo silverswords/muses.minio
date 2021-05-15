@@ -3,16 +3,17 @@ package bucketStorage
 import (
 	"context"
 	"fmt"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/encrypt"
-	"github.com/minio/minio-go/v7/pkg/replication"
-	"github.com/silverswords/muses.minio/bucketStorage/driver"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/encrypt"
+	"github.com/minio/minio-go/v7/pkg/replication"
+	"github.com/silverswords/muses.minio/bucketStorage/driver"
 )
 
 type Bucket struct {
@@ -20,8 +21,8 @@ type Bucket struct {
 	cacher     Cacher
 	bucketName string
 	ConfigInfo
-	mc MinioClient
-	uploadTimeOut time.Duration
+	mc               MinioClient
+	uploadTimeOut    time.Duration
 	maxUploadWorkers int
 }
 
@@ -45,7 +46,7 @@ func NewBucket(bucketName, configName, configPath string, uploadTimeOut time.Dur
 			configName,
 			configPath,
 		},
-		uploadTimeOut: uploadTimeOut,
+		uploadTimeOut:    uploadTimeOut,
 		maxUploadWorkers: maxUploadWorkers,
 	}, nil
 }
@@ -194,12 +195,12 @@ func (b *Bucket) GetObjectLockConfig() (string, string, *uint, string, error) {
 }
 
 type ObjectUpload struct {
-	Key string
+	Key    string
 	Object io.Reader
 }
 
 type UploadError struct {
-	Key string
+	Key   string
 	Error error
 }
 
@@ -211,15 +212,15 @@ func (b *Bucket) countNeededWorkers(objectsCount int) int {
 	if b.maxUploadWorkers > objectsCount {
 		return objectsCount
 	}
-	 return b.maxUploadWorkers
+	return b.maxUploadWorkers
 }
 
-func (b *Bucket) NewTypedWriter(ctx context.Context, objectsCount int, objectChannel chan ObjectUpload, opts ...driver.OtherPutObjectOption) (driver.Writer, error) {
+func (b *Bucket) NewTypedWriter(ctx context.Context, objectsCount int, objectChannel chan *ObjectUpload, opts ...driver.OtherPutObjectOption) (driver.Writer, error) {
 	var e encrypt.ServerSide
 	var d = int64(1024)
 	var (
 		defaultServerSideEncryption = e
-		defaultObjectSize = d
+		defaultObjectSize           = d
 	)
 
 	o := &driver.OtherPutObjectOptions{
