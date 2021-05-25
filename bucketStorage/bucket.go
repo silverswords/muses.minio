@@ -37,7 +37,6 @@ func NewBucket(bucketName, configName, configPath string, uploadTimeOut time.Dur
 		log.Println(err)
 	}
 
-	fmt.Println("cacher:", ca)
 	return &Bucket{
 		client:     c,
 		cacher:     ca,
